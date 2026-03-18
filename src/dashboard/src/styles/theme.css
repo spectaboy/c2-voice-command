@@ -1,0 +1,414 @@
+/* C2 Tactical Dashboard — Military Dark Theme */
+
+:root {
+  --bg-primary: #0a0e14;
+  --bg-secondary: #111922;
+  --bg-panel: #0d1117;
+  --bg-card: #161b22;
+  --border: #1e2a36;
+  --text-primary: #c9d1d9;
+  --text-muted: #6e7a86;
+  --text-header: #e6edf3;
+  --friendly: #00ff88;
+  --hostile: #ff3333;
+  --unknown: #ffff00;
+  --neutral: #00aaff;
+  --accent: #1f6feb;
+  --danger: #ff3333;
+  --font-mono: 'Courier New', 'Inconsolata', 'Fira Code', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* UNCLASSIFIED Banners */
+.classification-banner {
+  background: #006400;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  padding: 2px 0;
+  flex-shrink: 0;
+}
+
+/* Header bar */
+.header-bar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-header);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.header-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 255, 136, 0.04) 50%,
+    transparent 100%
+  );
+  animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 4-panel grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  grid-template-rows: 60% 40%;
+  height: 100%;
+  gap: 1px;
+  background: var(--border);
+}
+
+/* Panel base */
+.panel {
+  background: var(--bg-panel);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* Scrollbar */
+.panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+.panel-body::-webkit-scrollbar-track {
+  background: var(--bg-panel);
+}
+.panel-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* Status cards */
+.status-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--friendly);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.status-card.hostile { border-left-color: var(--hostile); }
+.status-card.unknown { border-left-color: var(--unknown); }
+.status-card.neutral { border-left-color: var(--neutral); }
+
+.status-card .callsign {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-header);
+  text-transform: uppercase;
+}
+
+.status-card .stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  color: var(--text-muted);
+}
+
+.status-card .stat-row .value {
+  color: var(--text-primary);
+}
+
+.status-card .armed-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.armed-badge.armed {
+  background: rgba(255, 51, 51, 0.2);
+  color: var(--hostile);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.armed-badge.disarmed {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--text-muted);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Transcript log */
+.transcript-entry {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.transcript-entry .timestamp {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.transcript-entry .raw-text {
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.transcript-entry .parsed-cmd {
+  color: var(--friendly);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.transcript-entry .confidence-bar {
+  display: inline-block;
+  height: 3px;
+  background: var(--friendly);
+  border-radius: 1px;
+  margin-top: 3px;
+}
+
+/* IFF audit trail */
+.iff-entry {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.iff-entry .change-arrow {
+  font-weight: 700;
+  margin: 0 4px;
+}
+
+.iff-entry .threat-score {
+  float: right;
+  font-weight: 700;
+}
+
+.iff-entry .indicators {
+  color: var(--text-muted);
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+/* Confirmation modal overlay */
+.confirmation-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.confirmation-modal {
+  background: var(--bg-card);
+  border: 2px solid var(--hostile);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+}
+
+.confirmation-modal .risk-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.risk-badge.critical {
+  background: rgba(255, 51, 51, 0.3);
+  color: var(--hostile);
+  border: 1px solid var(--hostile);
+}
+
+.risk-badge.high {
+  background: rgba(255, 165, 0, 0.3);
+  color: orange;
+  border: 1px solid orange;
+}
+
+.risk-badge.medium {
+  background: rgba(255, 255, 0, 0.2);
+  color: var(--unknown);
+  border: 1px solid var(--unknown);
+}
+
+.risk-badge.low {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--friendly);
+  border: 1px solid var(--friendly);
+}
+
+.confirmation-modal .readback {
+  font-size: 14px;
+  color: var(--text-header);
+  margin: 16px 0;
+  line-height: 1.5;
+}
+
+.confirmation-modal .btn-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.confirmation-modal button {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 10px 32px;
+  border: 2px solid;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  background: rgba(255, 51, 51, 0.2);
+  border-color: var(--hostile);
+  color: var(--hostile);
+}
+
+.btn-confirm:hover {
+  background: rgba(255, 51, 51, 0.4);
+}
+
+.btn-cancel {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: var(--friendly);
+  color: var(--friendly);
+}
+
+.btn-cancel:hover {
+  background: rgba(0, 255, 136, 0.2);
+}
+
+/* Connection status */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.connection-dot.connected { background: var(--friendly); }
+.connection-dot.reconnecting { background: var(--unknown); animation: pulse 1s infinite; }
+.connection-dot.disconnected { background: var(--hostile); }
+
+/* Map overrides */
+.leaflet-container {
+  background: var(--bg-primary) !important;
+  height: 100%;
+  width: 100%;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-card) !important;
+}
+
+/* Vehicle marker flash animation */
+@keyframes hostile-flash {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(2) drop-shadow(0 0 8px var(--hostile)); }
+}
+
+.marker-flash-hostile {
+  animation: hostile-flash 0.3s ease-out 3;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
