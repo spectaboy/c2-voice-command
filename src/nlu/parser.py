@@ -1,7 +1,10 @@
 """Core NLU: call Claude with tool-calling to parse transcripts into MilitaryCommands."""
 
+import json
 import os
 import logging
+import re
+from pathlib import Path
 from typing import Union
 
 import anthropic
@@ -18,6 +21,101 @@ from .tools import TOOLS, TOOL_TO_COMMAND_TYPE
 from .context import NLUContext
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Entity alias map — maps various operator names to canonical IFF UIDs
+# ---------------------------------------------------------------------------
+
+_entity_alias_map: dict[str, str] = {}  # lower-case alias → canonical uid
+
+
+def _load_entity_aliases() -> None:
+    """Build a case-insensitive alias map from the entity list JSON.
+
+    Populates ``_entity_alias_map`` from:
+      - uid
+      - callsign (if different from uid)
+      - common variations (dashes removed, spaces collapsed, etc.)
+    """
+    global _entity_alias_map
+    entity_path = os.getenv(
+        "ENTITY_LIST_PATH",
+        str(Path(__file__).resolve().parent.parent.parent / "data" / "entity_list.json"),
+    )
+    if not os.path.isfile(entity_path):
+        logger.info("No entity list at %s — skipping alias map", entity_path)
+        return
+
+    try:
+        raw = json.loads(Path(entity_path).read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning("Could not load entity list for NLU aliases: %s", exc)
+        return
+
+    entities = raw.get("entities", raw) if isinstance(raw, dict) else raw
+    alias_map: dict[str, str] = {}
+    for ent in entities:
+        uid = ent.get("uid", "")
+        if not uid:
+            continue
+        callsign = ent.get("callsign", uid)
+
+        # Add all variations
+        for value in {uid, callsign}:
+            low = value.lower()
+            alias_map[low] = uid
+            # Without dashes/underscores
+            nopunct = low.replace("-", "").replace("_", "")
+            alias_map[nopunct] = uid
+            # With spaces instead of dashes
+            alias_map[low.replace("-", " ")] = uid
+            # Strip leading zeros from numbers (e.g. "hostile01" → "hostile1")
+            no_leading_zeros = re.sub(r"0+(\d)", r"\1", nopunct)
+            if no_leading_zeros != nopunct:
+                alias_map[no_leading_zeros] = uid
+
+    _entity_alias_map = alias_map
+    logger.info("Loaded %d entity aliases for NLU resolution", len(alias_map))
+
+
+# Load once at module import time
+_load_entity_aliases()
+
+
+def _resolve_entity_uid(raw: str) -> str:
+    """Map an operator-spoken identifier to a canonical IFF entity UID.
+
+    Returns the canonical UID if a match is found, otherwise returns
+    the input unchanged.
+    """
+    if not raw:
+        return raw
+    low = raw.strip().lower()
+    # Exact match
+    if low in _entity_alias_map:
+        return _entity_alias_map[low]
+    # Without punctuation
+    stripped = low.replace("-", "").replace("_", "").replace(" ", "")
+    if stripped in _entity_alias_map:
+        return _entity_alias_map[stripped]
+    # Substring search (e.g. "hostile 1" → "HOSTILE-01")
+    for alias, uid in _entity_alias_map.items():
+        if stripped in alias.replace("-", "").replace("_", "").replace(" ", ""):
+            return uid
+    return raw.strip()
+
+
+def _build_entity_info() -> str:
+    """Build a prompt section listing known IFF entity identifiers."""
+    if not _entity_alias_map:
+        return ""
+    # Deduplicate to get unique UIDs
+    uids = sorted(set(_entity_alias_map.values()))
+    lines = ["## Known IFF Contacts (use these exact UIDs for engage_target.target_uid and classify_contact.contact_uid)"]
+    for uid in uids:
+        lines.append(f"- {uid}")
+    return "\n".join(lines)
 
 SYSTEM_PROMPT = """\
 You are a military command-and-control NLU parser for a multi-domain uncrewed vehicle system.
@@ -61,6 +159,8 @@ If the operator names a place you recognize (street, landmark, area), resolve it
 - For engage commands, ALWAYS use engage_target — these are CRITICAL risk.
 - Pick the single best-matching tool. Do not explain — just call the tool.
 - IMPORTANT: ALWAYS call a tool. Never respond with just text. If unsure about coordinates, estimate them.
+
+{entity_info}
 
 {context_block}
 """
@@ -132,6 +232,12 @@ def _tool_result_to_command(
     skip_keys = {"callsign", "lat", "lon", "alt_m", "grid_ref"}
     parameters = {k: v for k, v in tool_input.items() if k not in skip_keys}
 
+    # Resolve entity UIDs for ENGAGE and CLASSIFY commands
+    if "target_uid" in parameters:
+        parameters["target_uid"] = _resolve_entity_uid(str(parameters["target_uid"]))
+    if "contact_uid" in parameters:
+        parameters["contact_uid"] = _resolve_entity_uid(str(parameters["contact_uid"]))
+
     # Risk assessment at parse time (coordinator does final assessment)
     risk = RiskLevel.LOW
     requires_confirmation = False
@@ -168,6 +274,7 @@ class NLUParser:
         system = SYSTEM_PROMPT.format(
             fleet_info=_build_fleet_info(),
             alias_info=_build_alias_info(),
+            entity_info=_build_entity_info(),
             context_block=context_block,
         )
 

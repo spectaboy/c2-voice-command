@@ -11,10 +11,12 @@ Run with::
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import AsyncGenerator, Literal
+from typing import AsyncGenerator, Literal, Optional
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
@@ -22,10 +24,12 @@ from pydantic import BaseModel
 
 from src.iff.audit import AuditTrail
 from src.iff.contact_tracker import ContactTracker
+from src.iff.entity_loader import load_entity_list
 from src.iff.rules_engine import (
     DEFAULT_SENSITIVE_AREAS,
     classify_contact,
 )
+from src.iff.simulator import ContactSimulator
 from src.tak.cot_builder import build_cot_xml
 from src.tak.cot_sender import CoTSender
 from src.tak.cot_type_manager import get_cot_type, update_affiliation_in_cot_type
@@ -99,6 +103,82 @@ _ws_clients: set[WebSocket] = set()
 # ---------------------------------------------------------------------------
 
 
+_background_tasks: list[asyncio.Task] = []
+
+
+async def _auto_classify_loop(interval_s: float = 3.0) -> None:
+    """Periodically re-run IFF classification on all non-friendly contacts.
+
+    This makes IFF affiliations evolve over time as simulated contacts
+    move, without requiring external ``/classify`` calls.
+    """
+    while True:
+        try:
+            await asyncio.sleep(interval_s)
+
+            all_contacts = await tracker.get_all_contacts()
+            friendlies = [c for c in all_contacts if c.affiliation == "f"]
+
+            for contact in all_contacts:
+                if contact.affiliation == "f":
+                    continue  # Never auto-reclassify friendlies
+
+                prev_affiliation = contact.affiliation
+                affiliation, threat_score, confidence, indicators = classify_contact(
+                    contact, friendlies, DEFAULT_SENSITIVE_AREAS,
+                )
+
+                await tracker.set_classification(
+                    uid=contact.uid,
+                    affiliation=affiliation,
+                    threat_score=threat_score,
+                    confidence=confidence,
+                    indicators=indicators,
+                )
+
+                if affiliation != prev_affiliation:
+                    audit.add_entry(
+                        uid=contact.uid,
+                        previous_affiliation=prev_affiliation,
+                        new_affiliation=affiliation,
+                        confidence=confidence,
+                        threat_score=threat_score,
+                        indicators=indicators,
+                        source="auto",
+                    )
+                    assessment = _build_assessment(
+                        uid=contact.uid,
+                        affiliation=affiliation,
+                        confidence=confidence,
+                        threat_score=threat_score,
+                        indicators=indicators,
+                    )
+                    payload = assessment.model_dump()
+                    await _broadcast_ws(payload)
+                    await _notify_hub(payload)
+                    logger.info(
+                        "Auto-classify %s: %s → %s (score=%.2f)",
+                        contact.uid, prev_affiliation, affiliation, threat_score,
+                    )
+
+                    await _push_cot(
+                        uid=contact.uid,
+                        lat=contact.lat,
+                        lon=contact.lon,
+                        alt=contact.alt,
+                        heading=contact.heading,
+                        speed=contact.speed,
+                        domain=contact.domain,
+                        affiliation=affiliation,
+                    )
+
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Error in auto-classify loop")
+            await asyncio.sleep(interval_s)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup / shutdown hook for the IFF service."""
@@ -109,9 +189,42 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except OSError as exc:
         logger.warning("Could not connect to FTS on startup: %s", exc)
 
+    # Load entity list if configured
+    entity_path = os.getenv("ENTITY_LIST_PATH", "")
+    if entity_path:
+        count = await load_entity_list(tracker, entity_path)
+        logger.info("Loaded %d entities from ENTITY_LIST_PATH=%s", count, entity_path)
+    else:
+        # Try default location
+        default_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "data", "entity_list.json",
+        )
+        if os.path.isfile(default_path):
+            count = await load_entity_list(tracker, default_path)
+            logger.info("Loaded %d entities from default path %s", count, default_path)
+
+    # Start background tasks
+    simulator = ContactSimulator()
+    sim_task = asyncio.create_task(simulator.run(tracker, cot_sender, interval_s=1.0))
+    _background_tasks.append(sim_task)
+    logger.info("ContactSimulator started")
+
+    classify_task = asyncio.create_task(_auto_classify_loop(interval_s=3.0))
+    _background_tasks.append(classify_task)
+    logger.info("Auto-classify loop started")
+
     yield
 
     # Shutdown
+    for task in _background_tasks:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+    _background_tasks.clear()
+
     await cot_sender.disconnect()
     logger.info("CoTSender disconnected on shutdown")
 
@@ -372,6 +485,41 @@ async def get_contacts() -> list[ContactResponse]:
         )
         for c in contacts
     ]
+
+
+@app.get("/contact/{uid}", response_model=Optional[ContactResponse])
+async def get_contact(uid: str) -> ContactResponse:
+    """Return a single tracked contact by UID.
+
+    Used by the Coordinator to check IFF status before routing ENGAGE commands.
+    """
+    contact = await tracker.get_contact(uid)
+    if contact is None:
+        raise HTTPException(status_code=404, detail=f"Contact {uid!r} not tracked")
+    return ContactResponse(
+        uid=contact.uid,
+        lat=contact.lat,
+        lon=contact.lon,
+        alt=contact.alt,
+        heading=contact.heading,
+        speed=contact.speed,
+        affiliation=contact.affiliation,
+        threat_score=contact.threat_score,
+        confidence=contact.confidence,
+        indicators=contact.indicators,
+        domain=contact.domain,
+    )
+
+
+class LoadEntitiesRequest(BaseModel):
+    path: str
+
+
+@app.post("/load-entities")
+async def load_entities(req: LoadEntitiesRequest) -> dict:
+    """Load an entity list JSON file into the contact tracker."""
+    count = await load_entity_list(tracker, req.path)
+    return {"status": "ok", "loaded": count, "path": req.path}
 
 
 @app.get("/audit")

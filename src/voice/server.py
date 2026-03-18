@@ -221,32 +221,53 @@ async def ws_voice(ws: WebSocket) -> None:
         logger.info("WebSocket voice client disconnected")
 
 
-# Pending confirmation state: command_id -> True when awaiting confirm/cancel
-_pending_confirmation: dict[str, str] = {}
+# Pending confirmation queue — supports multiple commands awaiting confirm/cancel.
+# FIFO: operator CONFIRM pops the front; CANCEL ALL clears the queue.
+_pending_confirmations: list[str] = []
 
 
 def set_pending_confirmation(command_id: str) -> None:
-    """Mark a command as awaiting voice confirmation."""
-    _pending_confirmation["active"] = command_id
-    logger.info("Awaiting voice confirmation for command %s", command_id)
+    """Enqueue a command_id as awaiting voice confirmation."""
+    _pending_confirmations.append(command_id)
+    logger.info(
+        "Enqueued voice confirmation for command %s (queue depth: %d)",
+        command_id, len(_pending_confirmations),
+    )
 
 
 async def _emit_transcript(result: dict) -> None:
     """Forward transcript to NLU service and WebSocket hub.
 
-    If a confirmation is pending, check for CONFIRM/CANCEL first.
+    If confirmations are pending, check for CONFIRM/CANCEL first.
+    - CONFIRM → confirm the oldest pending command.
+    - CONFIRM ALL → confirm every pending command.
+    - CANCEL / ABORT / NEGATIVE → cancel the oldest pending command.
+    - CANCEL ALL → cancel every pending command.
     """
     import httpx
 
     transcript = result["transcript"].strip().upper()
 
     # Check for confirmation response
-    if "active" in _pending_confirmation:
-        command_id = _pending_confirmation.pop("active")
-        if "CONFIRM" in transcript:
+    if _pending_confirmations:
+        if "CONFIRM ALL" in transcript:
+            cmds = list(_pending_confirmations)
+            _pending_confirmations.clear()
+            for cid in cmds:
+                await _send_confirmation(cid, confirmed=True)
+            return
+        elif "CONFIRM" in transcript:
+            command_id = _pending_confirmations.pop(0)
             await _send_confirmation(command_id, confirmed=True)
             return
+        elif "CANCEL ALL" in transcript or "ABORT ALL" in transcript:
+            cmds = list(_pending_confirmations)
+            _pending_confirmations.clear()
+            for cid in cmds:
+                await _send_confirmation(cid, confirmed=False)
+            return
         elif "CANCEL" in transcript or "ABORT" in transcript or "NEGATIVE" in transcript:
+            command_id = _pending_confirmations.pop(0)
             await _send_confirmation(command_id, confirmed=False)
             return
 
