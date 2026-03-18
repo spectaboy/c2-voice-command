@@ -1,0 +1,140 @@
+[
+  {
+    "transcript": "UAV-1 move to overwatch position at latitude 44.65 longitude negative 63.58",
+    "command": {
+      "command_id": "a33b450e",
+      "command_type": "overwatch",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": {
+        "lat": 44.65,
+        "lon": -63.58,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "UAV-1 move to overwatch position at latitude 44.65 longitude negative 63.58",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T08:58:49.324603"
+    },
+    "timestamp": "2026-03-17T08:58:49.324834"
+  },
+  {
+    "transcript": "UAV-1 move to overwatch position at latitude 44.65 longitude negative 63.58",
+    "command": {
+      "command_id": "582dae28",
+      "command_type": "overwatch",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": {
+        "lat": 44.65,
+        "lon": -63.58,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "UAV-1 move to overwatch position at latitude 44.65 longitude negative 63.58",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T09:00:29.877727"
+    },
+    "timestamp": "2026-03-17T09:00:29.877842"
+  },
+  {
+    "transcript": "All units return to base immediately",
+    "command": {
+      "command_id": "eadefd33",
+      "command_type": "rtb",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "All units return to base immediately",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T09:01:12.032351"
+    },
+    "timestamp": "2026-03-17T09:01:12.032890"
+  },
+  {
+    "transcript": "All units return to base immediately",
+    "command": {
+      "command_id": "7d37bd90",
+      "command_type": "rtb",
+      "vehicle_callsign": "UAV-2",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "All units return to base immediately",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T09:01:12.032454"
+    },
+    "timestamp": "2026-03-17T09:01:12.033731"
+  },
+  {
+    "transcript": "All units return to base immediately",
+    "command": {
+      "command_id": "f6c22047",
+      "command_type": "rtb",
+      "vehicle_callsign": "UAV-3",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "All units return to base immediately",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T09:01:12.032507"
+    },
+    "timestamp": "2026-03-17T09:01:12.041748"
+  },
+  {
+    "transcript": "All units return to base immediately",
+    "command": {
+      "command_id": "fe534939",
+      "command_type": "rtb",
+      "vehicle_callsign": "UGV-1",
+      "domain": "ground",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "All units return to base immediately",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T09:01:12.032735"
+    },
+    "timestamp": "2026-03-17T09:01:12.048238"
+  },
+  {
+    "transcript": "All units return to base immediately",
+    "command": {
+      "command_id": "5810eed3",
+      "command_type": "rtb",
+      "vehicle_callsign": "UGV-2",
+      "domain": "ground",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "All units return to base immediately",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T09:01:12.032809"
+    },
+    "timestamp": "2026-03-17T09:01:12.054369"
+  },
+  {
+    "transcript": "All units return to base immediately",
+    "command": {
+      "command_id": "db39e8d5",
+      "command_type": "rtb",
+      "vehicle_callsign": "USV-1",
+      "domain": "maritime",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "All units return to base immediately",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-17T09:01:12.032843"
+    },
+    "timestamp": "2026-03-17T09:01:12.060248"
+  }
+]

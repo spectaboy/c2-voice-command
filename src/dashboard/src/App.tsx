@@ -8,6 +8,7 @@ import StatusCards from './components/StatusCards';
 import TranscriptLog from './components/TranscriptLog';
 import IFFAuditTrail from './components/IFFAuditTrail';
 import ConfirmationModal from './components/ConfirmationModal';
+import PushToTalk from './components/PushToTalk';
 
 const WS_URL = `ws://${window.location.hostname}:8005/ws`;
 const isMock = new URLSearchParams(window.location.search).has('mock');
@@ -71,6 +72,8 @@ export default function App() {
           <IFFAuditTrail entries={state.iffAuditLog} />
         </div>
       </div>
+
+      <PushToTalk />
 
       <ClassificationBanner />
 

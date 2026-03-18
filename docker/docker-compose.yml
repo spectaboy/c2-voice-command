@@ -1,0 +1,43 @@
+# FreeTAKServer for CoT/TAK integration
+# Usage: docker compose -f docker/docker-compose.yml up -d
+#
+# Ports:
+#   8087  - CoT TCP input (vehicle bridge sends CoT XML here)
+#   19023 - REST API
+#   5000  - Web UI
+#
+# Note: Requires Docker Desktop. If you don't have Docker, the C2 system
+# still works — the vehicle bridge will log warnings about FTS being
+# unreachable but everything else functions normally.
+
+services:
+  freetakserver:
+    image: freetakteam/freetakserver:latest
+    container_name: freetakserver
+    restart: unless-stopped
+    ports:
+      - "8087:8087"   # CoT TCP
+      - "8089:8089"   # CoT TLS
+      - "19023:19023" # REST API
+    environment:
+      - FTS_CONNECTION_MESSAGE=C2 Voice Command System Connected
+      - FTS_COT_PORT=8087
+      - FTS_SSLCOT_PORT=8089
+      - FTS_REST_API_PORT=19023
+    volumes:
+      - fts-data:/opt/fts
+
+  freetakserver-ui:
+    image: freetakteam/freetakserver-ui:latest
+    container_name: freetakserver-ui
+    restart: unless-stopped
+    ports:
+      - "5000:5000"   # Web UI
+    environment:
+      - FTS_IP=freetakserver
+      - FTS_API_PORT=19023
+    depends_on:
+      - freetakserver
+
+volumes:
+  fts-data:

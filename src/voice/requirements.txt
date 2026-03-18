@@ -1,0 +1,12 @@
+faster-whisper>=1.0.0
+torch>=2.0.0
+numpy
+sounddevice
+fastapi
+uvicorn[standard]
+websockets
+python-multipart
+edge-tts
+scipy
+httpx
+miniaudio

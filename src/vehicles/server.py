@@ -1,0 +1,166 @@
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
+
+from src.shared.schemas import MilitaryCommand, VehicleStatus
+from src.shared.constants import MAVLINK_BRIDGE_PORT, FTS_COT_PORT
+from src.vehicles.vehicle_manager import VehicleManager
+from src.vehicles.cot_generator import CoTGenerator
+from src.vehicles.cot_sender import CoTSender
+
+logger = logging.getLogger(__name__)
+
+# Global instances
+vehicle_manager: VehicleManager | None = None
+cot_generator: CoTGenerator | None = None
+cot_sender: CoTSender | None = None
+telemetry_task: asyncio.Task | None = None
+ws_clients: set[WebSocket] = set()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global vehicle_manager, cot_generator, cot_sender, telemetry_task
+
+    logging.basicConfig(level=logging.INFO)
+
+    vehicle_manager = VehicleManager()
+    cot_generator = CoTGenerator()
+    cot_sender = CoTSender(port=FTS_COT_PORT)
+
+    # Connect to SITL instances
+    await vehicle_manager.connect_all()
+
+    # Connect to FreeTAKServer (non-blocking — may not be running)
+    await cot_sender.connect()
+
+    # Start telemetry broadcast loop
+    telemetry_task = asyncio.create_task(_telemetry_loop())
+
+    yield
+
+    # Shutdown
+    if telemetry_task:
+        telemetry_task.cancel()
+        try:
+            await telemetry_task
+        except asyncio.CancelledError:
+            pass
+
+    await cot_sender.disconnect()
+    await vehicle_manager.disconnect_all()
+
+
+app = FastAPI(title="Vehicle Bridge", lifespan=lifespan)
+
+
+# -- REST endpoints --
+
+
+@app.get("/health")
+async def health():
+    return {
+        "service": "vehicle-bridge",
+        "connected_vehicles": vehicle_manager.connected_count if vehicle_manager else 0,
+        "cot_connected": cot_sender.connected if cot_sender else False,
+    }
+
+
+@app.post("/execute")
+async def execute_command(cmd: MilitaryCommand):
+    if vehicle_manager is None:
+        return {"success": False, "error": "Vehicle manager not initialized"}
+    return await vehicle_manager.execute_command(cmd)
+
+
+@app.get("/telemetry", response_model=list[VehicleStatus])
+async def get_telemetry():
+    if vehicle_manager is None:
+        return []
+    return vehicle_manager.get_all_status()
+
+
+class ReclassifyRequest(BaseModel):
+    uid: str
+    new_affiliation: str
+
+
+@app.post("/reclassify")
+async def reclassify(req: ReclassifyRequest):
+    if cot_generator is None:
+        return {"success": False, "error": "CoT generator not initialized"}
+    cot_generator.update_affiliation(req.uid, req.new_affiliation)
+    return {"success": True, "uid": req.uid, "affiliation": req.new_affiliation}
+
+
+# -- WebSocket --
+
+
+@app.websocket("/ws/telemetry")
+async def ws_telemetry(ws: WebSocket):
+    await ws.accept()
+    ws_clients.add(ws)
+    logger.info(f"WebSocket client connected ({len(ws_clients)} total)")
+    try:
+        while True:
+            # Keep connection alive; client doesn't send data
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        ws_clients.discard(ws)
+        logger.info(f"WebSocket client disconnected ({len(ws_clients)} total)")
+
+
+# -- Background telemetry loop --
+
+
+async def _telemetry_loop():
+    """1 Hz loop: broadcast telemetry via WebSocket and send CoT to FTS."""
+    global ws_clients
+    while True:
+        try:
+            await asyncio.sleep(1.0)
+
+            if vehicle_manager is None:
+                continue
+
+            statuses = vehicle_manager.get_all_status()
+
+            # Broadcast via WebSocket
+            if ws_clients and statuses:
+                payload = [s.model_dump(mode="json") for s in statuses]
+                dead = set()
+                for ws in ws_clients:
+                    try:
+                        await ws.send_json(payload)
+                    except Exception:
+                        dead.add(ws)
+                ws_clients -= dead
+
+            # Send CoT to FreeTAKServer
+            if cot_generator and cot_sender:
+                for status in statuses:
+                    xml = cot_generator.generate_cot_event(status)
+                    await cot_sender.send(xml)
+
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.error(f"Telemetry loop error: {e}")
+            await asyncio.sleep(1.0)
+
+
+# -- Entry point --
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "src.vehicles.server:app",
+        host="0.0.0.0",
+        port=MAVLINK_BRIDGE_PORT,
+        log_level="info",
+    )

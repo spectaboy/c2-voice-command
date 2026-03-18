@@ -1,0 +1,30 @@
+# Core
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+httpx>=0.25.0
+websockets>=12.0
+
+# Voice/ASR
+faster-whisper>=1.0.0
+numpy>=1.24.0
+scipy>=1.11.0
+torch>=2.1.0
+torchaudio>=2.1.0
+sounddevice>=0.4.6
+
+# TTS
+edge-tts>=6.1.0
+miniaudio>=1.59
+
+# NLU
+anthropic>=0.39.0
+
+# Vehicle Bridge
+pymavlink>=2.4.40
+
+# Fine-tuning (optional)
+# peft>=0.7.0
+# transformers>=4.36.0
+# ctranslate2>=4.0.0

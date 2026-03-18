@@ -1,12 +1,1 @@
 .env
-__pycache__/
-*.pyc
-*.pyo
-node_modules/
-dist/
-.vite/
-*.egg-info/
-.pytest_cache/
-command_log.json
-corrections.json
-src/nlu/data/
