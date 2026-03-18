@@ -26,21 +26,38 @@ class VehicleManager:
                 domain=cfg["domain"],
             )
 
-    async def connect_all(self) -> dict[str, bool]:
-        """Connect to all SITL instances in parallel. Returns {callsign: success}."""
-        results = {}
+    async def connect_all(self, retries: int = 5, delay: float = 3.0) -> dict[str, bool]:
+        """Connect to all SITL instances with retry. Returns {callsign: success}."""
+        results = {cs: False for cs in self._clients}
 
-        async def _connect_one(callsign: str, client: MAVLinkClient):
-            try:
-                await client.connect()
-                results[callsign] = True
-            except Exception as e:
-                logger.error(f"Failed to connect {callsign}: {e}")
-                results[callsign] = False
+        for attempt in range(1, retries + 1):
+            unconnected = {
+                cs: cl for cs, cl in self._clients.items()
+                if not cl.connected
+            }
+            if not unconnected:
+                break
 
-        await asyncio.gather(
-            *[_connect_one(cs, cl) for cs, cl in self._clients.items()]
-        )
+            logger.info(f"Connection attempt {attempt}/{retries} for {len(unconnected)} vehicles...")
+
+            async def _connect_one(callsign: str, client: MAVLinkClient):
+                try:
+                    await client.connect()
+                    results[callsign] = True
+                except Exception as e:
+                    logger.warning(f"[{callsign}] attempt {attempt} failed: {e}")
+
+            await asyncio.gather(
+                *[_connect_one(cs, cl) for cs, cl in unconnected.items()]
+            )
+
+            connected = sum(1 for v in results.values() if v)
+            if connected == len(self._clients):
+                break
+            if attempt < retries:
+                logger.info(f"Connected {connected}/{len(self._clients)}, retrying in {delay}s...")
+                await asyncio.sleep(delay)
+
         connected = sum(1 for v in results.values() if v)
         logger.info(f"Connected {connected}/{len(self._clients)} vehicles")
         return results

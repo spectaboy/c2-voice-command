@@ -2,11 +2,12 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from src.shared.schemas import MilitaryCommand, VehicleStatus
-from src.shared.constants import MAVLINK_BRIDGE_PORT, FTS_COT_PORT
+from src.shared.constants import MAVLINK_BRIDGE_PORT, FTS_COT_PORT, WS_PORT
 from src.vehicles.vehicle_manager import VehicleManager
 from src.vehicles.cot_generator import CoTGenerator
 from src.vehicles.cot_sender import CoTSender
@@ -66,6 +67,19 @@ async def health():
         "service": "vehicle-bridge",
         "connected_vehicles": vehicle_manager.connected_count if vehicle_manager else 0,
         "cot_connected": cot_sender.connected if cot_sender else False,
+    }
+
+
+@app.post("/reconnect")
+async def reconnect():
+    """Reconnect to SITL instances that aren't connected."""
+    if vehicle_manager is None:
+        return {"success": False, "error": "Vehicle manager not initialized"}
+    results = await vehicle_manager.connect_all(retries=3, delay=2.0)
+    return {
+        "success": True,
+        "connected": vehicle_manager.connected_count,
+        "results": results,
     }
 
 
@@ -140,6 +154,19 @@ async def _telemetry_loop():
                     except Exception:
                         dead.add(ws)
                 ws_clients -= dead
+
+            # Broadcast each vehicle status to the WebSocket Hub for the dashboard
+            if statuses:
+                hub_url = f"http://localhost:{WS_PORT}/broadcast"
+                try:
+                    async with httpx.AsyncClient(timeout=2.0) as client:
+                        for status in statuses:
+                            await client.post(hub_url, json={
+                                "type": "position_update",
+                                "payload": status.model_dump(mode="json"),
+                            })
+                except Exception:
+                    pass  # Hub may not be running
 
             # Send CoT to FreeTAKServer
             if cot_generator and cot_sender:

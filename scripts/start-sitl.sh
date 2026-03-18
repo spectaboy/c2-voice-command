@@ -63,38 +63,15 @@ if command -v wsl.exe &>/dev/null 2>&1 || command -v wsl &>/dev/null 2>&1; then
         # Check if launcher exists
         WSL_HAS_LAUNCHER=$($WSL_CMD -d Ubuntu -- bash -c "[ -f ~/start-c2-sitl.sh ] && echo yes || echo no" 2>/dev/null || echo "no")
 
-        if [ "$WSL_HAS_LAUNCHER" = "yes" ]; then
-            echo "Running ~/start-c2-sitl.sh in WSL..."
-            $WSL_CMD -d Ubuntu -- bash ~/start-c2-sitl.sh
-        else
-            echo "Running sim_vehicle.py instances in WSL..."
-            $WSL_CMD -d Ubuntu -- bash -c "
-                export PATH=\"\$HOME/.local/bin:\$HOME/ardupilot/Tools/autotest:\$PATH\"
-                cd \$HOME/ardupilot/ArduCopter
-
-                PIDS=()
-                trap 'kill \${PIDS[@]} 2>/dev/null; pkill -f arducopter 2>/dev/null; pkill -f ardurover 2>/dev/null; exit 0' INT TERM
-
-                sim_vehicle.py -v ArduCopter -I0 --sysid 1 -L $LOCATION --no-extra-ports --no-mavproxy --out=tcpin:0.0.0.0:5760 -D &>/dev/null &
-                PIDS+=(\$!); sleep 2
-                sim_vehicle.py -v ArduCopter -I1 --sysid 2 -L $LOCATION --no-extra-ports --no-mavproxy --out=tcpin:0.0.0.0:5770 -D &>/dev/null &
-                PIDS+=(\$!); sleep 2
-                sim_vehicle.py -v ArduCopter -I2 --sysid 3 -L $LOCATION --no-extra-ports --no-mavproxy --out=tcpin:0.0.0.0:5780 -D &>/dev/null &
-                PIDS+=(\$!); sleep 2
-                cd \$HOME/ardupilot/Rover
-                sim_vehicle.py -v Rover -I3 --sysid 4 -L $LOCATION --no-extra-ports --no-mavproxy --out=tcpin:0.0.0.0:5790 -D &>/dev/null &
-                PIDS+=(\$!); sleep 2
-                sim_vehicle.py -v Rover -I4 --sysid 5 -L $LOCATION --no-extra-ports --no-mavproxy --out=tcpin:0.0.0.0:5800 -D &>/dev/null &
-                PIDS+=(\$!); sleep 2
-                sim_vehicle.py -v Rover -f motorboat -I5 --sysid 6 -L $LOCATION --no-extra-ports --no-mavproxy --out=tcpin:0.0.0.0:5810 -D &>/dev/null &
-                PIDS+=(\$!)
-
-                echo 'All 6 SITL instances launched in WSL2.'
-                echo 'Ports: 5760 5770 5780 5790 5800 5810'
-                echo 'Press Ctrl+C to stop.'
-                wait
-            "
+        # Copy the launcher into WSL if needed
+        SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+        WSL_SCRIPT="$SCRIPT_DIR/start-c2-sitl-direct.sh"
+        if [ -f "$WSL_SCRIPT" ]; then
+            $WSL_CMD -d Ubuntu bash -c "cp '$(wslpath "$WSL_SCRIPT" 2>/dev/null || echo "/mnt/c${WSL_SCRIPT//\\//}")' ~/start-c2-sitl.sh && chmod +x ~/start-c2-sitl.sh" 2>/dev/null || true
         fi
+
+        echo "Running ~/start-c2-sitl.sh in WSL (daemonized)..."
+        $WSL_CMD -d Ubuntu bash -c "bash ~/start-c2-sitl.sh"
         exit 0
     else
         echo "WSL2 Ubuntu found but ArduPilot is not installed."

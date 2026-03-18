@@ -136,5 +136,21 @@
       "timestamp": "2026-03-17T09:01:12.032843"
     },
     "timestamp": "2026-03-17T09:01:12.060248"
+  },
+  {
+    "transcript": "Send the vehicles, bro. Where are the vehicles at? I can't see anything.",
+    "command": {
+      "command_id": "5dc62903",
+      "command_type": "status",
+      "vehicle_callsign": "all",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Send the vehicles, bro. Where are the vehicles at? I can't see anything.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-18T06:16:24.979702"
+    },
+    "timestamp": "2026-03-18T06:16:24.982136"
   }
 ]

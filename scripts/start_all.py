@@ -14,6 +14,7 @@ os.chdir(PROJECT_ROOT)
 sys.path.insert(0, PROJECT_ROOT)
 
 SERVICES = [
+    {"name": "Mock SITL",     "module": "src.vehicles.mock_sitl",       "port": None, "wait": 5, "raw": True},
     {"name": "WebSocket Hub", "module": "src.websocket_hub.server:app", "port": 8005, "wait": 10},
     {"name": "Coordinator",   "module": "src.coordinator.server:app",   "port": 8000, "wait": 10},
     {"name": "NLU Parser",    "module": "src.nlu.server:app",           "port": 8002, "wait": 10},
@@ -83,10 +84,14 @@ def main():
     print(f"Working dir: {os.getcwd()}")
     print()
 
-    # Clear old processes on our ports
+    # Clear old processes on our ports (services + SITL)
     print("Clearing ports...")
+    SITL_PORTS = [5760, 5770, 5780, 5790, 5800, 5810]
     for svc in SERVICES:
-        kill_port(svc["port"])
+        if svc["port"]:
+            kill_port(svc["port"])
+    for port in SITL_PORTS:
+        kill_port(port)
     time.sleep(2)
 
     print("Starting services...\n")
@@ -97,12 +102,16 @@ def main():
         port = svc["port"]
         max_wait = svc["wait"]
 
-        cmd = [
-            sys.executable, "-m", "uvicorn", module,
-            "--host", "0.0.0.0",
-            "--port", str(port),
-            "--log-level", "warning",
-        ]
+        # Raw module (like mock_sitl) vs uvicorn service
+        if svc.get("raw"):
+            cmd = [sys.executable, "-m", module]
+        else:
+            cmd = [
+                sys.executable, "-m", "uvicorn", module,
+                "--host", "0.0.0.0",
+                "--port", str(port),
+                "--log-level", "warning",
+            ]
 
         proc = subprocess.Popen(
             cmd,
@@ -111,14 +120,20 @@ def main():
         )
         processes.append(proc)
 
-        # Wait for health
+        # Wait for health or just wait for raw modules
         started = False
         for i in range(max_wait):
             # Check if process crashed
             if proc.poll() is not None:
                 print(f"  CRASH  {name} (:{port}) — process exited with code {proc.returncode}")
                 break
-            if check_health(port):
+            if port is None:
+                # Raw module — just wait a bit and check it's alive
+                if i >= 2 and proc.poll() is None:
+                    print(f"  OK     {name} (mock SITL)")
+                    started = True
+                    break
+            elif check_health(port):
                 print(f"  OK     {name} (:{port})")
                 started = True
                 break
@@ -130,14 +145,19 @@ def main():
     # Final status
     print("\n=== Final Status ===")
     passed = 0
-    for svc in SERVICES:
+    for i, svc in enumerate(SERVICES):
         name = svc["name"]
         port = svc["port"]
-        ok = check_health(port)
+        if port is None:
+            # Raw module — check if process is alive
+            ok = i < len(processes) and processes[i].poll() is None
+        else:
+            ok = check_health(port)
         status = "UP" if ok else "DOWN"
         if ok:
             passed += 1
-        print(f"  {status:4s}  {name} (:{port})")
+        label = f":{port}" if port else "mock"
+        print(f"  {status:4s}  {name} ({label})")
 
     print(f"\n{passed}/{len(SERVICES)} services running.")
 
