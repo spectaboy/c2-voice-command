@@ -38,21 +38,21 @@ def check_health(port, timeout=2):
 
 
 def kill_port(port):
-    """Kill any process on the given port (Windows)."""
+    """Kill any process on the given port."""
+    if port is None:
+        return
     try:
         result = subprocess.run(
-            ["netstat", "-ano"],
+            ["lsof", "-ti", f":{port}"],
             capture_output=True, text=True, timeout=5
         )
-        for line in result.stdout.splitlines():
-            if f"0.0.0.0:{port}" in line and "LISTENING" in line:
-                parts = line.split()
-                pid = parts[-1]
-                if pid and pid != "0":
-                    subprocess.run(
-                        ["taskkill", "/F", "/PID", pid],
-                        capture_output=True, timeout=5
-                    )
+        for pid in result.stdout.strip().splitlines():
+            pid = pid.strip()
+            if pid and pid != "0":
+                subprocess.run(
+                    ["kill", "-9", pid],
+                    capture_output=True, timeout=5
+                )
     except Exception:
         pass
 
