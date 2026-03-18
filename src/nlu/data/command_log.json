@@ -152,5 +152,68 @@
       "timestamp": "2026-03-18T06:16:24.979702"
     },
     "timestamp": "2026-03-18T06:16:24.982136"
+  },
+  {
+    "transcript": "Move UAV 1 to Citadel Hill.",
+    "command": {
+      "command_id": "2ebd8479",
+      "command_type": "move",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": {
+        "lat": 44.6478,
+        "lon": -63.5802,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Move UAV 1 to Citadel Hill.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-18T14:29:41.793914"
+    },
+    "timestamp": "2026-03-18T14:29:41.794217"
+  },
+  {
+    "transcript": "Move UAV 1 to Citadel Hill and UAV 2 should go to to go to Lower Water Street next to the Shabaktu landing.",
+    "command": {
+      "command_id": "24a9372f",
+      "command_type": "move",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": {
+        "lat": 44.6478,
+        "lon": -63.5802,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Move UAV 1 to Citadel Hill and UAV 2 should go to to go to Lower Water Street next to the Shabaktu landing.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-18T14:33:37.748048"
+    },
+    "timestamp": "2026-03-18T14:33:37.748486"
+  },
+  {
+    "transcript": "Move UAV 1 to Citadel Hill and UAV 2 should go to to go to Lower Water Street next to the Shabaktu landing.",
+    "command": {
+      "command_id": "6d9de4b9",
+      "command_type": "move",
+      "vehicle_callsign": "UAV-2",
+      "domain": "air",
+      "location": {
+        "lat": 44.643,
+        "lon": -63.5672,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Move UAV 1 to Citadel Hill and UAV 2 should go to to go to Lower Water Street next to the Shabaktu landing.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-18T14:33:37.748332"
+    },
+    "timestamp": "2026-03-18T14:33:37.749850"
   }
 ]

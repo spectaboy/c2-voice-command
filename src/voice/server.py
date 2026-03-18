@@ -255,29 +255,40 @@ async def _emit_transcript(result: dict) -> None:
         "confidence": result["confidence"],
     }
 
-    # POST to NLU
+    # POST to NLU, then forward parsed commands to Coordinator
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.post(NLU_URL, json=payload)
             logger.info("NLU response: %s", resp.status_code)
+
+            if resp.status_code == 200:
+                commands = resp.json()
+                for cmd in commands:
+                    logger.info("Forwarding command to coordinator: %s %s",
+                                cmd.get("command_type"), cmd.get("vehicle_callsign"))
+                    try:
+                        coord_resp = await client.post(
+                            "http://localhost:8000/command", json=cmd
+                        )
+                        logger.info("Coordinator response: %s", coord_resp.status_code)
+                    except Exception as e:
+                        logger.warning("Failed to reach coordinator: %s", e)
     except Exception as e:
         logger.warning("Failed to reach NLU at %s: %s", NLU_URL, e)
 
-    # Send to WebSocket hub
+    # Send transcript to WebSocket hub via HTTP POST (not WebSocket)
     try:
-        import websockets
-        ws_msg = {
-            "type": "voice_transcript",
-            "payload": {
-                "transcript": result["transcript"],
-                "confidence": result["confidence"],
-                "timestamp": result["timestamp"],
-            },
-        }
-        async with websockets.connect(WS_HUB_URL) as hub:
-            await hub.send(json.dumps(ws_msg))
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            await client.post(f"http://localhost:8005/broadcast", json={
+                "type": "voice_transcript",
+                "payload": {
+                    "transcript": result["transcript"],
+                    "confidence": result["confidence"],
+                    "timestamp": result["timestamp"],
+                },
+            })
     except Exception as e:
-        logger.warning("Failed to reach WS hub at %s: %s", WS_HUB_URL, e)
+        logger.warning("Failed to broadcast transcript to hub: %s", e)
 
 
 async def _send_confirmation(command_id: str, confirmed: bool) -> None:
