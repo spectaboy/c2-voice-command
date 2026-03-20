@@ -25,6 +25,9 @@ COT_TYPES: Dict[Tuple[str, str], str] = {
     ("maritime", "f"): "a-f-S-X",           # Friendly surface vessel
     ("maritime", "h"): "a-h-S-X",           # Hostile surface vessel
     ("maritime", "u"): "a-u-S",             # Unknown sea surface
+    ("air", "n"):      "a-n-A",            # Neutral air
+    ("ground", "n"):   "a-n-G",            # Neutral ground
+    ("maritime", "n"): "a-n-S",            # Neutral sea surface
 }
 
 

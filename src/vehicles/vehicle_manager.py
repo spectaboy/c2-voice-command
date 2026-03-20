@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from typing import Optional
 
 from src.shared.schemas import MilitaryCommand, VehicleStatus, CommandType
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 class VehicleManager:
     """Manages all 6 SITL vehicle connections and routes commands."""
 
-    def __init__(self, host: str = "127.0.0.1"):
+    def __init__(self, host: str = os.environ.get("SITL_HOST", "127.0.0.1")):
         self.host = host
         self._clients: dict[str, MAVLinkClient] = {}
 

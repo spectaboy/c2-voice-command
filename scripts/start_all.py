@@ -13,8 +13,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(PROJECT_ROOT)
 sys.path.insert(0, PROJECT_ROOT)
 
+USE_REAL_SITL = bool(os.environ.get("SITL_HOST", ""))
+
 SERVICES = [
-    {"name": "Mock SITL",     "module": "src.vehicles.mock_sitl",       "port": None, "wait": 5, "raw": True},
+    *([{"name": "Mock SITL", "module": "src.vehicles.mock_sitl", "port": None, "wait": 5, "raw": True}] if not USE_REAL_SITL else []),
     {"name": "WebSocket Hub", "module": "src.websocket_hub.server:app", "port": 8005, "wait": 10},
     {"name": "Coordinator",   "module": "src.coordinator.server:app",   "port": 8000, "wait": 10},
     {"name": "NLU Parser",    "module": "src.nlu.server:app",           "port": 8002, "wait": 10},

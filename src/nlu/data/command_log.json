@@ -466,5 +466,57 @@
       "timestamp": "2026-03-20T04:48:59.697062"
     },
     "timestamp": "2026-03-20T04:48:59.705882"
+  },
+  {
+    "transcript": "Alpha, take off to 20 meters.",
+    "command": {
+      "command_id": "a448a630",
+      "command_type": "takeoff",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": null,
+      "parameters": {
+        "alt_m": 20
+      },
+      "raw_transcript": "Alpha, take off to 20 meters.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T08:24:45.103475"
+    },
+    "timestamp": "2026-03-20T08:24:45.103718"
+  },
+  {
+    "transcript": "Alpha, proceed forward and make a smooth landing onto the runway.",
+    "command": {
+      "command_id": "fe0240a4",
+      "command_type": "land",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Alpha, proceed forward and make a smooth landing onto the runway.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T08:27:04.842861"
+    },
+    "timestamp": "2026-03-20T08:27:04.843152"
+  },
+  {
+    "transcript": "Alpha, takeoff to 20 meters and move forward for 10 seconds.",
+    "command": {
+      "command_id": "49c8f77b",
+      "command_type": "takeoff",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": null,
+      "parameters": {
+        "alt_m": 20
+      },
+      "raw_transcript": "Alpha, takeoff to 20 meters and move forward for 10 seconds.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T08:28:42.912016"
+    },
+    "timestamp": "2026-03-20T08:28:42.912513"
   }
 ]
