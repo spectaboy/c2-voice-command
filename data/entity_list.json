@@ -1,0 +1,94 @@
+{
+  "entities": [
+    {
+      "uid": "SITL-UAV-1",
+      "callsign": "UAV-1",
+      "affiliation": "f",
+      "domain": "air",
+      "lat": 44.6488,
+      "lon": -63.5752,
+      "alt": 0.0
+    },
+    {
+      "uid": "SITL-UAV-2",
+      "callsign": "UAV-2",
+      "affiliation": "f",
+      "domain": "air",
+      "lat": 44.6493,
+      "lon": -63.5747,
+      "alt": 0.0
+    },
+    {
+      "uid": "SITL-UAV-3",
+      "callsign": "UAV-3",
+      "affiliation": "f",
+      "domain": "air",
+      "lat": 44.6493,
+      "lon": -63.5757,
+      "alt": 0.0
+    },
+    {
+      "uid": "SITL-UGV-1",
+      "callsign": "UGV-1",
+      "affiliation": "f",
+      "domain": "ground",
+      "lat": 44.6483,
+      "lon": -63.5749,
+      "alt": 0.0
+    },
+    {
+      "uid": "SITL-UGV-2",
+      "callsign": "UGV-2",
+      "affiliation": "f",
+      "domain": "ground",
+      "lat": 44.6483,
+      "lon": -63.5755,
+      "alt": 0.0
+    },
+    {
+      "uid": "SITL-USV-1",
+      "callsign": "USV-1",
+      "affiliation": "f",
+      "domain": "maritime",
+      "lat": 44.6478,
+      "lon": -63.5752,
+      "alt": 0.0
+    },
+    {
+      "uid": "UNKNOWN-01",
+      "callsign": "UNKNOWN-01",
+      "affiliation": "u",
+      "domain": "ground",
+      "lat": 44.6218,
+      "lon": -63.5752,
+      "alt": 0.0
+    },
+    {
+      "uid": "UNKNOWN-02",
+      "callsign": "UNKNOWN-02",
+      "affiliation": "u",
+      "domain": "ground",
+      "lat": 44.6640,
+      "lon": -63.5680,
+      "alt": 0.0
+    },
+    {
+      "uid": "UNKNOWN-03",
+      "callsign": "UNKNOWN-03",
+      "affiliation": "u",
+      "domain": "ground",
+      "lat": 44.6488,
+      "lon": -63.5495,
+      "alt": 0.0
+    },
+    {
+      "uid": "HOSTILE-01",
+      "callsign": "HOSTILE-01",
+      "affiliation": "h",
+      "domain": "ground",
+      "lat": 44.6550,
+      "lon": -63.5600,
+      "alt": 0.0
+    }
+  ]
+}

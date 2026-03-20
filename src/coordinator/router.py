@@ -1,7 +1,7 @@
 """Command routing to downstream services."""
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 
@@ -140,3 +140,28 @@ async def _broadcast_event(
     except Exception:
         # Non-critical — dashboard just won't get the event
         logger.debug("WS hub broadcast failed (non-critical)")
+
+
+async def lookup_iff(target_uid: str) -> Optional[dict]:
+    """Query the IFF engine for a contact's current classification.
+
+    Returns the contact dict (with affiliation, threat_score, confidence,
+    indicators) or None if the contact is not tracked or the IFF engine
+    is unreachable.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{IFF_ENGINE_URL}/contact/{target_uid}")
+            if resp.status_code == 200:
+                return resp.json()
+            if resp.status_code == 404:
+                logger.info("IFF: contact %s not tracked", target_uid)
+                return None
+            logger.warning("IFF lookup for %s returned %d", target_uid, resp.status_code)
+            return None
+    except httpx.ConnectError:
+        logger.warning("IFF engine not reachable for lookup")
+        return None
+    except Exception as exc:
+        logger.warning("IFF lookup error: %s", exc)
+        return None

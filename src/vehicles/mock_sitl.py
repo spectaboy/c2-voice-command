@@ -92,9 +92,7 @@ class MockVehicle:
     def _run_server(self):
         """TCP server: accept clients in a loop."""
         srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # Do NOT set SO_REUSEADDR on Windows — it allows multiple processes
-        # to bind the same port, causing silent connection routing failures.
-        srv.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             srv.bind(("0.0.0.0", self.port))
         except OSError as e:

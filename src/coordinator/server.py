@@ -2,16 +2,17 @@
 
 import logging
 
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from src.shared.constants import COORDINATOR_PORT
-from src.shared.schemas import MilitaryCommand
-from .risk import assess_risk, generate_readback
+from src.shared.constants import COORDINATOR_PORT, VOICE_PORT, WS_PORT
+from src.shared.schemas import CommandType, MilitaryCommand
+from .risk import assess_risk, generate_readback, generate_engage_readback
 from .confirmation import ConfirmationStore
-from .router import route_command
+from .router import lookup_iff, route_command
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +32,41 @@ class ConfirmRequest(BaseModel):
     confirmed: bool
 
 
+async def _notify_confirmation(
+    command_id: str,
+    command_type: str,
+    vehicle_callsign: str,
+    risk_level: str,
+    readback: str,
+) -> None:
+    """Trigger voice readback AND broadcast a confirmation_required WS event."""
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        try:
+            await client.post(
+                f"http://localhost:{VOICE_PORT}/readback",
+                json={"text": readback, "command_id": command_id},
+            )
+        except Exception as exc:
+            logger.warning("Voice readback failed: %s", exc)
+
+        try:
+            await client.post(
+                f"http://localhost:{WS_PORT}/broadcast",
+                json={
+                    "type": "confirmation_required",
+                    "payload": {
+                        "command_id": command_id,
+                        "command_type": command_type,
+                        "vehicle_callsign": vehicle_callsign,
+                        "risk_level": risk_level,
+                        "readback_text": readback,
+                    },
+                },
+            )
+        except Exception as exc:
+            logger.warning("WS hub confirmation broadcast failed: %s", exc)
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "coordinator", "port": COORDINATOR_PORT}
@@ -38,26 +74,71 @@ async def health():
 
 @app.post("/command")
 async def handle_command(command: MilitaryCommand):
-    """Accept a MilitaryCommand, assess risk, route or request confirmation."""
-    command = await assess_risk(command)
+    """Accept a MilitaryCommand, assess risk, route or request confirmation.
+
+    For ENGAGE commands, the IFF engine is consulted first:
+    - FRIENDLY target -> BLOCKED (never routed)
+    - UNKNOWN target  -> confirmation required
+    - HOSTILE target   -> confirmation required
+    - IFF unavailable  -> confirmation required
+    """
+    command = assess_risk(command)
+
+    # -- IFF-aware ENGAGE gating --
+    if command.command_type == CommandType.ENGAGE:
+        target_uid = command.parameters.get("target_uid", "")
+        iff_result = None
+        if target_uid:
+            iff_result = await lookup_iff(target_uid)
+
+        affiliation = iff_result.get("affiliation", "u") if iff_result else "u"
+
+        # BLOCK friendly targets
+        if affiliation == "f":
+            logger.warning("ENGAGE BLOCKED: target %s is FRIENDLY", target_uid)
+            return {
+                "status": "blocked",
+                "command_id": command.command_id,
+                "reason": f"Target {target_uid} is classified FRIENDLY. "
+                          "ENGAGE on friendly assets is prohibited.",
+                "target_uid": target_uid,
+                "affiliation": "f",
+            }
+
+        # All ENGAGE commands require confirmation (hostile + unknown)
+        command.requires_confirmation = True
+        readback = generate_engage_readback(command, iff_result)
+        command_id = confirmations.add(command, readback)
+        logger.info(
+            "ENGAGE confirmation required: target=%s affiliation=%s",
+            target_uid, affiliation,
+        )
+        await _notify_confirmation(
+            command_id, command.command_type.value,
+            command.vehicle_callsign, command.risk_level.value, readback,
+        )
+        return {
+            "status": "confirmation_required",
+            "command_id": command_id,
+            "readback": readback,
+            "risk_level": command.risk_level.value,
+            "target_uid": target_uid,
+            "affiliation": affiliation,
+        }
+
+    # -- Standard flow for non-ENGAGE commands --
     logger.info(
         f"Command: {command.command_type} {command.vehicle_callsign} "
         f"risk={command.risk_level} confirm={command.requires_confirmation}"
     )
 
-    # IFF safety gate: blocked commands (e.g. engaging a friendly)
-    if command.parameters.get("_blocked"):
-        reason = command.parameters.get("_block_reason", "Command blocked by safety gate")
-        logger.warning("Command BLOCKED: %s", reason)
-        return {
-            "status": "blocked",
-            "command_id": command.command_id,
-            "reason": reason,
-        }
-
     if command.requires_confirmation:
         readback = generate_readback(command)
         command_id = confirmations.add(command, readback)
+        await _notify_confirmation(
+            command_id, command.command_type.value,
+            command.vehicle_callsign, command.risk_level.value, readback,
+        )
         return {
             "status": "confirmation_required",
             "command_id": command_id,

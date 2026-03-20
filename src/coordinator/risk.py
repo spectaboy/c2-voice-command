@@ -1,10 +1,8 @@
 """Risk assessment engine for military commands."""
 
 import logging
+from typing import Optional
 
-import httpx
-
-from src.shared.constants import IFF_PORT
 from src.shared.schemas import CommandType, MilitaryCommand, RiskLevel
 
 logger = logging.getLogger(__name__)
@@ -26,52 +24,17 @@ RISK_MAP = {
 # Commands that require voice confirmation before execution
 CONFIRMATION_REQUIRED = {RiskLevel.HIGH, RiskLevel.CRITICAL}
 
-IFF_URL = f"http://localhost:{IFF_PORT}"
 
-
-async def assess_risk(command: MilitaryCommand) -> MilitaryCommand:
+def assess_risk(command: MilitaryCommand) -> MilitaryCommand:
     """Evaluate command risk and set confirmation requirements.
 
-    Mutates and returns the command with updated risk_level and requires_confirmation.
-    For ENGAGE commands, queries IFF to enforce safety:
-      - friendly target → blocked
-      - unknown target → CRITICAL + requires confirmation
-      - hostile target → CRITICAL + requires confirmation
+    Sets risk_level and requires_confirmation based on command type.
+    NOTE: IFF checks for ENGAGE are handled in the coordinator handler,
+    not here — this is pure risk classification.
     """
     risk = RISK_MAP.get(command.command_type, RiskLevel.LOW)
     command.risk_level = risk
     command.requires_confirmation = risk in CONFIRMATION_REQUIRED
-
-    # IFF safety gate for ENGAGE commands
-    if command.command_type == CommandType.ENGAGE:
-        target_uid = command.parameters.get("target_uid", "")
-        if target_uid:
-            try:
-                async with httpx.AsyncClient(timeout=3.0) as client:
-                    resp = await client.get(f"{IFF_URL}/check/{target_uid}")
-                    if resp.status_code == 200:
-                        iff_data = resp.json()
-                        affiliation = iff_data.get("affiliation", "u")
-                        if affiliation == "f":
-                            # BLOCK: cannot engage friendly
-                            command.parameters["_blocked"] = True
-                            command.parameters["_block_reason"] = (
-                                f"BLOCKED: {target_uid} is classified FRIENDLY. "
-                                f"Engagement denied to prevent fratricide."
-                            )
-                            logger.warning("ENGAGE blocked: %s is FRIENDLY", target_uid)
-                        elif affiliation == "u":
-                            command.risk_level = RiskLevel.CRITICAL
-                            command.requires_confirmation = True
-                            logger.info("ENGAGE requires confirmation: %s is UNKNOWN", target_uid)
-                        else:
-                            # hostile — still requires confirmation
-                            command.risk_level = RiskLevel.CRITICAL
-                            command.requires_confirmation = True
-                            logger.info("ENGAGE requires confirmation: %s is HOSTILE", target_uid)
-            except Exception as e:
-                logger.warning("IFF check failed for %s: %s — defaulting to CRITICAL+confirm", target_uid, e)
-
     return command
 
 
@@ -101,4 +64,57 @@ def generate_readback(command: MilitaryCommand) -> str:
     return (
         f"CONFIRM: {risk_label} RISK. {command.command_type.value.upper()} "
         f"{command.vehicle_callsign}{loc}. Say CONFIRM to execute or CANCEL to abort."
+    )
+
+
+_AFFILIATION_LABELS = {
+    "f": "FRIENDLY",
+    "h": "HOSTILE",
+    "u": "UNKNOWN",
+    "n": "NEUTRAL",
+}
+
+
+def generate_engage_readback(
+    command: MilitaryCommand,
+    iff_result: Optional[dict],
+) -> str:
+    """Generate readback text for ENGAGE that includes IFF classification."""
+    target_uid = command.parameters.get("target_uid", "unknown target")
+    risk_label = command.risk_level.value.upper()
+
+    if iff_result is None:
+        return (
+            f"CONFIRM: {risk_label} RISK. You are ordering {command.vehicle_callsign} "
+            f"to ENGAGE {target_uid}. WARNING: IFF status unavailable — target "
+            f"classification could not be verified. "
+            f"Say CONFIRM to execute or CANCEL to abort."
+        )
+
+    affiliation_code = iff_result.get("affiliation", "u")
+    affiliation_label = _AFFILIATION_LABELS.get(affiliation_code, "UNKNOWN")
+    threat_score = iff_result.get("threat_score")
+    confidence = iff_result.get("confidence")
+    indicators = iff_result.get("indicators", [])
+
+    threat_detail = ""
+    if threat_score is not None:
+        threat_detail += f" Threat score: {threat_score:.2f}."
+    if confidence is not None:
+        threat_detail += f" Confidence: {confidence:.2f}."
+    if indicators:
+        indicator_str = "; ".join(indicators[:3])
+        threat_detail += f" Indicators: {indicator_str}."
+
+    if affiliation_code == "h":
+        return (
+            f"CONFIRM: {risk_label} RISK. You are ordering {command.vehicle_callsign} "
+            f"to ENGAGE HOSTILE target {target_uid}.{threat_detail} "
+            f"Say CONFIRM to execute or CANCEL to abort."
+        )
+
+    return (
+        f"CONFIRM: {risk_label} RISK. You are ordering {command.vehicle_callsign} "
+        f"to ENGAGE {affiliation_label} target {target_uid}.{threat_detail} "
+        f"Say CONFIRM to execute or CANCEL to abort."
     )
