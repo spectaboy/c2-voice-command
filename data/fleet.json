@@ -1,0 +1,4 @@
+{
+  "Alpha": {"sitl_port": 5760, "sysid": 1, "type": "ArduCopter", "cot_type": "a-f-A-M-F-Q-r", "domain": "air"},
+  "Bravo": {"sitl_port": 5770, "sysid": 2, "type": "ArduCopter", "cot_type": "a-f-A-M-F-Q-r", "domain": "air"}
+}

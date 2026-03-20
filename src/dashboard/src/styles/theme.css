@@ -401,6 +401,49 @@ html, body, #root {
   animation: hostile-flash 0.3s ease-out 3;
 }
 
+/* Transcript status styles */
+.transcript-entry.status-executed {
+  border-left: 3px solid var(--friendly);
+  background: rgba(0, 255, 136, 0.03);
+}
+
+.transcript-entry.status-blocked {
+  border-left: 3px solid var(--hostile);
+  background: rgba(255, 51, 51, 0.05);
+}
+
+.transcript-entry.status-error {
+  border-left: 3px solid var(--hostile);
+  background: rgba(255, 51, 51, 0.03);
+}
+
+.transcript-entry.status-confirmation {
+  border-left: 3px solid var(--unknown);
+  background: rgba(255, 255, 0, 0.03);
+}
+
+.system-msg {
+  font-size: 12px;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.system-msg.executed { color: var(--friendly); }
+.system-msg.blocked { color: var(--hostile); }
+.system-msg.error { color: var(--hostile); }
+.system-msg.confirmation { color: var(--unknown); }
+
+.status-icon {
+  font-weight: 700;
+  margin-right: 6px;
+  font-size: 13px;
+}
+
+.status-icon.executed { color: var(--friendly); }
+.status-icon.blocked { color: var(--hostile); }
+.status-icon.error { color: var(--hostile); }
+.status-icon.confirmation { color: var(--unknown); }
+
 /* Empty state */
 .empty-state {
   display: flex;

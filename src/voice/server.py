@@ -255,6 +255,20 @@ async def _emit_transcript(result: dict) -> None:
         "confidence": result["confidence"],
     }
 
+    # Broadcast transcript to dashboard IMMEDIATELY (before NLU processing)
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            await client.post("http://localhost:8005/broadcast", json={
+                "type": "voice_transcript",
+                "payload": {
+                    "raw_transcript": result["transcript"],
+                    "confidence": result["confidence"],
+                    "timestamp": result["timestamp"],
+                },
+            })
+    except Exception as e:
+        logger.warning("Failed to broadcast transcript to hub: %s", e)
+
     # POST to NLU, then forward parsed commands to Coordinator
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -263,6 +277,9 @@ async def _emit_transcript(result: dict) -> None:
 
             if resp.status_code == 200:
                 commands = resp.json()
+                if not commands:
+                    logger.warning("NLU returned no commands for: %s", result["transcript"])
+                    await _broadcast_error("Could not parse command. Please try again.")
                 for cmd in commands:
                     logger.info("Forwarding command to coordinator: %s %s",
                                 cmd.get("command_type"), cmd.get("vehicle_callsign"))
@@ -270,25 +287,101 @@ async def _emit_transcript(result: dict) -> None:
                         coord_resp = await client.post(
                             "http://localhost:8000/command", json=cmd
                         )
-                        logger.info("Coordinator response: %s", coord_resp.status_code)
+                        coord_data = coord_resp.json()
+                        logger.info("Coordinator response: %s %s", coord_resp.status_code, coord_data.get("status"))
+
+                        # Handle blocked commands (IFF safety gate)
+                        if coord_data.get("status") == "blocked":
+                            reason = coord_data.get("reason", "Command blocked")
+                            logger.warning("Command blocked: %s", reason)
+                            asyncio.create_task(speak_with_effects(reason))
+                            await _broadcast_command_event("blocked", cmd, reason)
+
+                        # Handle confirmation required — TTS readback
+                        elif coord_data.get("status") == "confirmation_required":
+                            readback = coord_data.get("readback", "")
+                            cmd_id = coord_data.get("command_id", "")
+                            if readback:
+                                asyncio.create_task(speak_with_effects(readback))
+                            if cmd_id:
+                                set_pending_confirmation(cmd_id)
+                            await _broadcast_command_event("confirmation", cmd, readback)
+
+                        # Handle successful execution — TTS readback
+                        elif coord_data.get("status") in ("executed", "confirmed_and_executed"):
+                            readback = _generate_execution_readback(cmd)
+                            if readback:
+                                asyncio.create_task(speak_with_effects(readback))
+                            await _broadcast_command_event("executed", cmd, readback or "Executed.")
+
                     except Exception as e:
                         logger.warning("Failed to reach coordinator: %s", e)
+            elif resp.status_code == 422:
+                logger.warning("NLU returned 422 for: %s", result["transcript"])
+                await _broadcast_error("Could not understand command. Please rephrase.")
     except Exception as e:
         logger.warning("Failed to reach NLU at %s: %s", NLU_URL, e)
 
-    # Send transcript to WebSocket hub via HTTP POST (not WebSocket)
+
+async def _broadcast_error(message: str) -> None:
+    """Broadcast a command_error event to WebSocket hub for the dashboard."""
+    import httpx
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
-            await client.post(f"http://localhost:8005/broadcast", json={
-                "type": "voice_transcript",
+            await client.post("http://localhost:8005/broadcast", json={
+                "type": "command_error",
                 "payload": {
-                    "transcript": result["transcript"],
-                    "confidence": result["confidence"],
-                    "timestamp": result["timestamp"],
+                    "message": message,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 },
             })
     except Exception as e:
-        logger.warning("Failed to broadcast transcript to hub: %s", e)
+        logger.warning("Failed to broadcast error to hub: %s", e)
+
+
+def _generate_execution_readback(cmd: dict) -> str | None:
+    """Generate TTS readback for a successfully executed command."""
+    callsign = cmd.get("vehicle_callsign", "vehicle")
+    cmd_type = cmd.get("command_type", "")
+    params = cmd.get("parameters", {})
+    if cmd_type == "takeoff":
+        return f"{callsign} taking off to {int(params.get('alt_m', 20))} meters."
+    elif cmd_type == "land":
+        return f"{callsign} landing."
+    elif cmd_type == "move":
+        return f"{callsign} proceeding to target location."
+    elif cmd_type == "rtb":
+        if callsign.upper() == "ALL":
+            return "All vehicles returning to base."
+        return f"{callsign} returning to base."
+    elif cmd_type == "loiter":
+        return f"{callsign} holding position."
+    elif cmd_type == "patrol":
+        return f"{callsign} beginning patrol."
+    elif cmd_type == "overwatch":
+        return f"{callsign} establishing overwatch."
+    elif cmd_type == "classify":
+        return "Contact reclassified."
+    return f"{callsign} executing."
+
+
+async def _broadcast_command_event(status: str, cmd: dict, message: str) -> None:
+    """Broadcast a command execution event to the dashboard."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            await client.post("http://localhost:8005/broadcast", json={
+                "type": "command_result",
+                "payload": {
+                    "status": status,
+                    "command_type": cmd.get("command_type", ""),
+                    "vehicle_callsign": cmd.get("vehicle_callsign", ""),
+                    "message": message,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                },
+            })
+    except Exception:
+        pass
 
 
 async def _send_confirmation(command_id: str, confirmed: bool) -> None:

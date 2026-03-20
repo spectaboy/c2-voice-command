@@ -20,7 +20,9 @@ type Action =
   | { type: 'voice_transcript'; payload: VoiceTranscript }
   | { type: 'confirmation_required'; payload: ConfirmationRequest }
   | { type: 'dismiss_confirmation' }
-  | { type: 'set_connection'; status: AppState['connectionStatus'] };
+  | { type: 'set_connection'; status: AppState['connectionStatus'] }
+  | { type: 'command_result'; payload: { status: string; command_type: string; vehicle_callsign: string; message: string; timestamp: string } }
+  | { type: 'command_error'; payload: { message: string; timestamp?: string } };
 
 // --- Initial state ---
 
@@ -84,6 +86,32 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, commandAcks };
     }
 
+    case 'command_result': {
+      const p = action.payload;
+      const entry: VoiceTranscript = {
+        raw_transcript: p.message,
+        confidence: 1.0,
+        timestamp: p.timestamp || new Date().toISOString(),
+        status: p.status as VoiceTranscript['status'],
+        status_message: p.message,
+        command_type: p.command_type,
+        vehicle_callsign: p.vehicle_callsign,
+      };
+      return { ...state, transcripts: [...state.transcripts, entry] };
+    }
+
+    case 'command_error': {
+      const p = action.payload;
+      const entry: VoiceTranscript = {
+        raw_transcript: p.message,
+        confidence: 0,
+        timestamp: p.timestamp || new Date().toISOString(),
+        status: 'error',
+        status_message: p.message,
+      };
+      return { ...state, transcripts: [...state.transcripts, entry] };
+    }
+
     case 'voice_transcript': {
       return {
         ...state,
@@ -130,6 +158,12 @@ export function useAppState() {
         break;
       case 'confirmation_required':
         dispatch({ type: 'confirmation_required', payload: payload as unknown as ConfirmationRequest });
+        break;
+      case 'command_result':
+        dispatch({ type: 'command_result', payload: payload as unknown as { status: string; command_type: string; vehicle_callsign: string; message: string; timestamp: string } });
+        break;
+      case 'command_error':
+        dispatch({ type: 'command_error', payload: payload as unknown as { message: string; timestamp?: string } });
         break;
     }
   }, []);

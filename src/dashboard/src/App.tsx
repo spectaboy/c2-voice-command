@@ -27,10 +27,10 @@ export default function App() {
   const handleConfirm = useCallback(async () => {
     if (!state.pendingConfirmation) return;
     try {
-      await fetch(`/confirm/${state.pendingConfirmation.command_id}`, {
+      await fetch(`http://${window.location.hostname}:8000/confirm/${state.pendingConfirmation.command_id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'confirm' }),
+        body: JSON.stringify({ confirmed: true }),
       });
     } catch {
       // coordinator may be offline
@@ -41,10 +41,10 @@ export default function App() {
   const handleCancel = useCallback(async () => {
     if (!state.pendingConfirmation) return;
     try {
-      await fetch(`/confirm/${state.pendingConfirmation.command_id}`, {
+      await fetch(`http://${window.location.hostname}:8000/confirm/${state.pendingConfirmation.command_id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'cancel' }),
+        body: JSON.stringify({ confirmed: false }),
       });
     } catch {
       // coordinator may be offline

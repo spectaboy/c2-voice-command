@@ -4,6 +4,7 @@ from typing import Optional
 
 from src.shared.schemas import MilitaryCommand, VehicleStatus, CommandType
 from src.shared.constants import VEHICLES
+from src.shared.battlespace import get_active_vehicles
 from src.vehicles.mavlink_client import MAVLinkClient
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,8 @@ class VehicleManager:
         self.host = host
         self._clients: dict[str, MAVLinkClient] = {}
 
-        for callsign, cfg in VEHICLES.items():
+        fleet = get_active_vehicles()
+        for callsign, cfg in fleet.items():
             self._clients[callsign] = MAVLinkClient(
                 callsign=callsign,
                 host=host,
@@ -141,6 +143,15 @@ class VehicleManager:
                             cmd.location.lat, cmd.location.lon, cmd.location.alt_m
                         )
                     return {"success": True, "action": "patrol", "callsign": client.callsign}
+
+                case CommandType.TAKEOFF:
+                    alt = cmd.parameters.get("alt_m", 20.0)
+                    await client.takeoff(alt)
+                    return {"success": True, "action": "takeoff", "callsign": client.callsign, "alt_m": alt}
+
+                case CommandType.LAND:
+                    await client.land()
+                    return {"success": True, "action": "land", "callsign": client.callsign}
 
                 case _:
                     return {"success": False, "error": f"Unsupported command type: {cmd.command_type}"}

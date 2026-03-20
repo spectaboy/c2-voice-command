@@ -43,7 +43,9 @@ TOOLS = [
         "name": "return_to_base",
         "description": (
             "Return a vehicle to its home/launch position. Use for 'RTB', "
-            "'return to base', 'come home', 'return home', 'bring it back'."
+            "'return to base', 'come home', 'return home', 'bring it back', "
+            "'abort', 'abort mission', 'abort all', 'abort all missions', "
+            "'emergency RTB', 'recall', 'stand down'. Use callsign='all' to recall all vehicles."
         ),
         "input_schema": {
             "type": "object",
@@ -218,6 +220,46 @@ TOOLS = [
             "required": ["callsign", "target_uid"],
         },
     },
+    {
+        "name": "takeoff_vehicle",
+        "description": (
+            "Command an air vehicle (UAV) to take off to a specified altitude. "
+            "Use for 'take off', 'takeoff', 'launch', 'get airborne', 'lift off', "
+            "'spin up and take off'. Only applies to air vehicles (copters)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "callsign": {
+                    "type": "string",
+                    "description": "Vehicle callsign (must be an air vehicle / UAV)",
+                },
+                "alt_m": {
+                    "type": "number",
+                    "description": "Target altitude in meters. Default 20m if not specified.",
+                },
+            },
+            "required": ["callsign"],
+        },
+    },
+    {
+        "name": "land_vehicle",
+        "description": (
+            "Command a vehicle to land at its current position. "
+            "Use for 'land', 'touch down', 'set down', 'bring it down', "
+            "'land now', 'put it on the ground'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "callsign": {
+                    "type": "string",
+                    "description": "Vehicle callsign or 'all' for all vehicles",
+                },
+            },
+            "required": ["callsign"],
+        },
+    },
 ]
 
 # Map tool names to CommandType values
@@ -230,4 +272,6 @@ TOOL_TO_COMMAND_TYPE = {
     "classify_contact": "classify",
     "request_status": "status",
     "engage_target": "engage",
+    "takeoff_vehicle": "takeoff",
+    "land_vehicle": "land",
 }

@@ -34,6 +34,8 @@ class CommandType(str, Enum):
     ENGAGE = "engage"
     CLASSIFY = "classify"
     STATUS = "status"
+    TAKEOFF = "takeoff"
+    LAND = "land"
 
 
 class Location(BaseModel):

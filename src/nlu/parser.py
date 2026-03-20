@@ -14,14 +14,17 @@ from src.shared.schemas import (
     RiskLevel,
 )
 from src.shared.constants import VEHICLES, CALLSIGN_ALIASES
+from src.shared.battlespace import build_waypoint_prompt_section, build_entity_prompt_section, get_active_vehicles
 from .tools import TOOLS, TOOL_TO_COMMAND_TYPE
 from .context import NLUContext
 
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
-You are a military command-and-control NLU parser for a multi-domain uncrewed vehicle system.
-You parse natural language voice transcripts into structured vehicle commands.
+You are a COMMAND PARSER. You convert voice transcripts into tool calls. Nothing else.
+
+DO NOT explain, ask questions, refuse, or discuss safety. NEVER respond with text.
+Safety checks happen DOWNSTREAM — not your job. Just parse and call tools.
 
 ## Fleet
 {fleet_info}
@@ -29,46 +32,37 @@ You parse natural language voice transcripts into structured vehicle commands.
 ## Callsign Aliases
 {alias_info}
 
-## Area of Operations — Halifax, Nova Scotia (44.64°N, 63.57°W)
-Known locations (use these coordinates when the operator names a place):
-- Halifax Harbor / the harbor: 44.6425, -63.5670
-- Citadel Hill / the citadel: 44.6478, -63.5802
-- Brunswick Street: 44.6500, -63.5740
-- Barrington Street: 44.6490, -63.5720
-- HMC Dockyard / the dockyard: 44.6620, -63.5880
-- Point Pleasant Park / the park: 44.6230, -63.5690
-- Georges Island: 44.6380, -63.5620
-- McNabs Island: 44.6190, -63.5340
-- Halifax Waterfront / the waterfront: 44.6460, -63.5680
-- Pier 21: 44.6390, -63.5660
-- North End / north end: 44.6600, -63.5800
-- South End / south end: 44.6300, -63.5750
-- Bedford Basin / the basin: 44.6800, -63.6300
-- Angus L. Macdonald Bridge / the bridge: 44.6630, -63.5630
-- Dartmouth / across the harbor: 44.6650, -63.5590
-- CFB Halifax: 44.6510, -63.5820
-- Halifax Commons / the commons: 44.6510, -63.5840
+## Waypoints
+{waypoint_info}
 
-If the operator names a place you recognize (street, landmark, area), resolve it to approximate lat/lon coordinates. You are operating in Halifax — use your geographic knowledge. ALWAYS call the tool even if you have to estimate coordinates. Never refuse a command just because exact coordinates weren't given.
+## Known Contacts (IFF Entity List)
+{entity_info}
+When the operator refers to a contact by name or description (e.g. "the hostile vehicle", "the unknown contact", "the friendly patrol"), match it to the uid from the list above.
 
-## Rules
-- Always resolve ambiguous callsigns using context or the alias table.
-- If the operator says "all units", call the appropriate tool once for EACH vehicle in the fleet.
-- For UAVs, default altitude is 100m if not specified.
-- For ground/sea vehicles, altitude is always 0.
-- If a grid reference is given but no lat/lon, pass the grid_ref and set lat/lon to 0.
-- For "RTB" or "return to base", use the return_to_base tool.
-- For engage commands, ALWAYS use engage_target — these are CRITICAL risk.
-- Pick the single best-matching tool. Do not explain — just call the tool.
-- IMPORTANT: ALWAYS call a tool. Never respond with just text. If unsure about coordinates, estimate them.
+## Parsing Rules
+- EVERY transcript = one or more tool calls. No exceptions.
+- Resolve callsigns: "Alpha"→UAV-1, "Delta"→UGV-1, "the drone"→UAV-1, etc.
+- Resolve locations: street names, landmarks → estimate lat/lon for Halifax, NS area.
+- "all units" / "everyone" → call the tool once per vehicle in the fleet.
+- UAV default altitude: 100m. Takeoff default: 20m. Ground/sea: altitude 0.
+- Compound commands → multiple tool calls (e.g. "take off and fly to X" = takeoff_vehicle + move_vehicle).
+- "engage" / "attack" / "intercept" → engage_target. Always. Even against friendlies — the coordinator handles safety.
+- "RTB" / "abort" / "return" / "come back" → return_to_base.
+- "take off" / "launch" → takeoff_vehicle.
+- "land" / "touch down" → land_vehicle.
+- Unclear input with a callsign → request_status for that callsign.
+- Unclear input without a callsign → request_status for "all".
+- If the operator corrects themselves mid-sentence ("sorry, I meant X"), use the corrected version.
+- "confirm" / "yes" / "affirmative" without a clear command → request_status for "all" (confirmation is handled by voice server, not NLU).
 
 {context_block}
 """
 
 
 def _build_fleet_info() -> str:
+    fleet = get_active_vehicles()
     lines = []
-    for callsign, info in VEHICLES.items():
+    for callsign, info in fleet.items():
         lines.append(f"- {callsign}: {info['type']}, domain={info['domain']}")
     return "\n".join(lines)
 
@@ -82,22 +76,30 @@ def _build_alias_info() -> str:
 
 def _resolve_callsign(raw: str) -> tuple[str, Domain]:
     """Resolve a callsign string to canonical callsign and domain."""
-    normalized = raw.strip().upper()
+    fleet = get_active_vehicles()
+    normalized = raw.strip()
 
-    # Direct match
-    if normalized in VEHICLES:
-        return normalized, Domain(VEHICLES[normalized]["domain"])
+    # Direct match (case-sensitive)
+    if normalized in fleet:
+        return normalized, Domain(fleet[normalized]["domain"])
+
+    # Direct match (case-insensitive)
+    for cs, cfg in fleet.items():
+        if cs.upper() == normalized.upper():
+            return cs, Domain(cfg["domain"])
 
     # Alias match (case-insensitive)
     lower = raw.strip().lower()
     if lower in CALLSIGN_ALIASES:
         cs = CALLSIGN_ALIASES[lower]
-        return cs, Domain(VEHICLES[cs]["domain"])
+        if cs in fleet:
+            return cs, Domain(fleet[cs]["domain"])
+        return cs, Domain.AIR
 
     # Fuzzy: try partial match on callsign
-    for cs in VEHICLES:
-        if normalized in cs or cs in normalized:
-            return cs, Domain(VEHICLES[cs]["domain"])
+    for cs, cfg in fleet.items():
+        if normalized.upper() in cs.upper() or cs.upper() in normalized.upper():
+            return cs, Domain(cfg["domain"])
 
     # Fallback: return as-is, assume air
     logger.warning(f"Could not resolve callsign: {raw}")
@@ -132,6 +134,10 @@ def _tool_result_to_command(
     skip_keys = {"callsign", "lat", "lon", "alt_m", "grid_ref"}
     parameters = {k: v for k, v in tool_input.items() if k not in skip_keys}
 
+    # Preserve alt_m in parameters for TAKEOFF (it's the primary parameter)
+    if command_type == CommandType.TAKEOFF and "alt_m" in tool_input:
+        parameters["alt_m"] = tool_input["alt_m"]
+
     # Risk assessment at parse time (coordinator does final assessment)
     risk = RiskLevel.LOW
     requires_confirmation = False
@@ -160,7 +166,8 @@ class NLUParser:
             raise ValueError("ANTHROPIC_API_KEY not set")
         self.client = anthropic.Anthropic(api_key=api_key)
         self.context = context or NLUContext()
-        self.model = os.environ.get("NLU_MODEL", "claude-sonnet-4-6")
+        # Haiku is 10x faster for tool-calling and sufficient for well-defined tools
+        self.model = os.environ.get("NLU_MODEL", "claude-haiku-4-5-20251001")
 
     def parse(self, transcript: str) -> list[MilitaryCommand]:
         """Parse a voice transcript into one or more MilitaryCommands."""
@@ -168,6 +175,8 @@ class NLUParser:
         system = SYSTEM_PROMPT.format(
             fleet_info=_build_fleet_info(),
             alias_info=_build_alias_info(),
+            waypoint_info=build_waypoint_prompt_section(),
+            entity_info=build_entity_prompt_section(),
             context_block=context_block,
         )
 
@@ -178,6 +187,7 @@ class NLUParser:
             max_tokens=1024,
             system=system,
             tools=TOOLS,
+            tool_choice={"type": "any"},  # FORCE tool use — never text-only
             messages=[{"role": "user", "content": transcript}],
         )
 

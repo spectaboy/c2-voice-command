@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
 RECONNECT_DELAY = 3.0
+RECONNECT_BACKOFF_MAX = 30.0  # Max delay between reconnect attempts
 
 
 class CoTSender:
@@ -15,6 +17,8 @@ class CoTSender:
         self._reader: asyncio.StreamReader | None = None
         self._writer: asyncio.StreamWriter | None = None
         self._connected = False
+        self._last_reconnect_attempt = 0.0
+        self._reconnect_delay = RECONNECT_DELAY
 
     @property
     def connected(self) -> bool:
@@ -30,7 +34,7 @@ class CoTSender:
             logger.info(f"CoTSender connected to {self.host}:{self.port}")
         except (ConnectionRefusedError, OSError) as e:
             self._connected = False
-            logger.warning(f"CoTSender failed to connect: {e}")
+            logger.debug(f"CoTSender: FTS not available ({e})")
 
     async def send(self, cot_xml: str) -> bool:
         """Send a CoT XML event. Returns True if sent successfully."""
@@ -45,7 +49,7 @@ class CoTSender:
             await self._writer.drain()
             return True
         except (ConnectionResetError, BrokenPipeError, OSError) as e:
-            logger.warning(f"CoTSender send failed: {e}")
+            logger.debug(f"CoTSender send failed: {e}")
             self._connected = False
             return False
 
@@ -63,8 +67,17 @@ class CoTSender:
         logger.info("CoTSender disconnected")
 
     async def _reconnect(self) -> None:
-        """Attempt to reconnect after a failed send."""
-        logger.info("CoTSender attempting reconnect...")
+        """Attempt to reconnect with exponential backoff (max 30s)."""
+        now = time.time()
+        # Skip if we attempted too recently
+        if now - self._last_reconnect_attempt < self._reconnect_delay:
+            return
+        self._last_reconnect_attempt = now
+        logger.debug("CoTSender attempting reconnect (backoff=%.0fs)...", self._reconnect_delay)
         await self.disconnect()
-        await asyncio.sleep(RECONNECT_DELAY)
+        await asyncio.sleep(self._reconnect_delay)
         await self.connect()
+        if self._connected:
+            self._reconnect_delay = RECONNECT_DELAY  # Reset on success
+        else:
+            self._reconnect_delay = min(self._reconnect_delay * 2, RECONNECT_BACKOFF_MAX)

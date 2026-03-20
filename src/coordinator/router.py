@@ -21,6 +21,8 @@ VEHICLE_COMMANDS = {
     CommandType.LOITER,
     CommandType.PATROL,
     CommandType.OVERWATCH,
+    CommandType.TAKEOFF,
+    CommandType.LAND,
 }
 
 
@@ -72,11 +74,19 @@ async def _send_to_vehicle_bridge(
         return {"error": f"vehicle_bridge_{e.response.status_code}", "command_id": command.command_id}
 
 
+_AFFILIATION_MAP = {
+    "friendly": "f", "hostile": "h", "unknown": "u", "neutral": "n",
+    "friend": "f", "enemy": "h", "foe": "h",
+}
+
+
 async def _send_to_iff(client: httpx.AsyncClient, command: MilitaryCommand) -> dict:
     try:
+        raw_affil = command.parameters.get("new_affiliation", "u")
+        affil = _AFFILIATION_MAP.get(raw_affil.lower(), raw_affil) if raw_affil else "u"
         payload = {
-            "contact_uid": command.parameters.get("contact_uid"),
-            "new_affiliation": command.parameters.get("new_affiliation"),
+            "uid": command.parameters.get("contact_uid"),
+            "new_affiliation": affil,
         }
         resp = await client.post(f"{IFF_ENGINE_URL}/manual-classify", json=payload)
         resp.raise_for_status()

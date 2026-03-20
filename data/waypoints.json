@@ -1,0 +1,21 @@
+{
+  "Alpha": {"lat": 44.6488, "lon": -63.5752},
+  "Bravo": {"lat": 44.6520, "lon": -63.5700},
+  "Charlie": {"lat": 44.6550, "lon": -63.5780},
+  "Delta": {"lat": 44.6460, "lon": -63.5690},
+  "Echo": {"lat": 44.6430, "lon": -63.5750},
+  "Foxtrot": {"lat": 44.6500, "lon": -63.5830},
+  "Golf": {"lat": 44.6475, "lon": -63.5650},
+  "Hotel": {"lat": 44.6540, "lon": -63.5850},
+  "Base": {"lat": 44.6488, "lon": -63.5752},
+  "Citadel Hill": {"lat": 44.6478, "lon": -63.5802},
+  "Halifax Harbor": {"lat": 44.6425, "lon": -63.5670},
+  "Halifax Waterfront": {"lat": 44.6460, "lon": -63.5680},
+  "Georges Island": {"lat": 44.6380, "lon": -63.5620},
+  "Point Pleasant Park": {"lat": 44.6230, "lon": -63.5690},
+  "HMC Dockyard": {"lat": 44.6620, "lon": -63.5880},
+  "Barrington and Duke": {"lat": 44.6490, "lon": -63.5727},
+  "Barrington and Prince": {"lat": 44.6473, "lon": -63.5726},
+  "Upper Water Street": {"lat": 44.6490, "lon": -63.5690},
+  "Downtown": {"lat": 44.6480, "lon": -63.5730}
+}

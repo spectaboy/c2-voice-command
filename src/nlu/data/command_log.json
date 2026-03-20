@@ -215,5 +215,256 @@
       "timestamp": "2026-03-18T14:33:37.748332"
     },
     "timestamp": "2026-03-18T14:33:37.749850"
+  },
+  {
+    "transcript": "Move, UAV 3, 20 centimeters to the left. Ah, sorry, 20 feet to the left. UAV 2 should start moving onto Duke Street and take a right. Keep moving.",
+    "command": {
+      "command_id": "6317c845",
+      "command_type": "status",
+      "vehicle_callsign": "UAV-2",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Move, UAV 3, 20 centimeters to the left. Ah, sorry, 20 feet to the left. UAV 2 should start moving onto Duke Street and take a right. Keep moving.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T00:11:33.785846"
+    },
+    "timestamp": "2026-03-20T00:11:33.786240"
+  },
+  {
+    "transcript": "Move, UAV 3, 20 centimeters to the left. Ah, sorry, 20 feet to the left. UAV 2 should start moving onto Duke Street and take a right. Keep moving.",
+    "command": {
+      "command_id": "0abe6e95",
+      "command_type": "status",
+      "vehicle_callsign": "UAV-3",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Move, UAV 3, 20 centimeters to the left. Ah, sorry, 20 feet to the left. UAV 2 should start moving onto Duke Street and take a right. Keep moving.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T00:11:33.786075"
+    },
+    "timestamp": "2026-03-20T00:11:33.787410"
+  },
+  {
+    "transcript": "UAV 2, you should start moving forward, stay on to Duke Street toward Upper Water Street and then take a right.",
+    "command": {
+      "command_id": "7f71a981",
+      "command_type": "move",
+      "vehicle_callsign": "UAV-2",
+      "domain": "air",
+      "location": {
+        "lat": 44.646,
+        "lon": -63.568,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "UAV 2, you should start moving forward, stay on to Duke Street toward Upper Water Street and then take a right.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T00:12:53.854687"
+    },
+    "timestamp": "2026-03-20T00:12:53.855626"
+  },
+  {
+    "transcript": "UGV 1 must engage in combat with UAV 2. It must proceed on to Argyle Street and drive into upward towards Duke Street. Take a right onto Duke Street and stop at the intersection between Duke Street and Barrington Street. Then engage combat with UAV 2 and UAV 2 is hostile. Confirm engage.",
+    "command": {
+      "command_id": "664ac1e6",
+      "command_type": "move",
+      "vehicle_callsign": "UGV-1",
+      "domain": "ground",
+      "location": {
+        "lat": 44.649,
+        "lon": -63.572,
+        "alt_m": 0.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "UGV 1 must engage in combat with UAV 2. It must proceed on to Argyle Street and drive into upward towards Duke Street. Take a right onto Duke Street and stop at the intersection between Duke Street and Barrington Street. Then engage combat with UAV 2 and UAV 2 is hostile. Confirm engage.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T00:30:29.656377"
+    },
+    "timestamp": "2026-03-20T00:30:29.657068"
+  },
+  {
+    "transcript": "UGV 1 must engage in combat with UAV 2. It must proceed on to Argyle Street and drive into upward towards Duke Street. Take a right onto Duke Street and stop at the intersection between Duke Street and Barrington Street. Then engage combat with UAV 2 and UAV 2 is hostile. Confirm engage.",
+    "command": {
+      "command_id": "57d20784",
+      "command_type": "classify",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": null,
+      "parameters": {
+        "contact_uid": "UAV-2",
+        "new_affiliation": "hostile"
+      },
+      "raw_transcript": "UGV 1 must engage in combat with UAV 2. It must proceed on to Argyle Street and drive into upward towards Duke Street. Take a right onto Duke Street and stop at the intersection between Duke Street and Barrington Street. Then engage combat with UAV 2 and UAV 2 is hostile. Confirm engage.",
+      "risk_level": "medium",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T00:30:29.656751"
+    },
+    "timestamp": "2026-03-20T00:30:29.662202"
+  },
+  {
+    "transcript": "UAV 1, move to the intersection between Barrington Street and Prince Street.",
+    "command": {
+      "command_id": "4b11ff62",
+      "command_type": "move",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": {
+        "lat": 44.6487,
+        "lon": -63.5717,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "UAV 1, move to the intersection between Barrington Street and Prince Street.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T04:10:03.865480"
+    },
+    "timestamp": "2026-03-20T04:10:03.866228"
+  },
+  {
+    "transcript": "Move UAV 1 to the intersection of Barrington Street and Duke Street, and wait for my second command.",
+    "command": {
+      "command_id": "09cc9acb",
+      "command_type": "move",
+      "vehicle_callsign": "UAV-1",
+      "domain": "air",
+      "location": {
+        "lat": 44.649,
+        "lon": -63.5727,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Move UAV 1 to the intersection of Barrington Street and Duke Street, and wait for my second command.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T04:18:08.639009"
+    },
+    "timestamp": "2026-03-20T04:18:08.639363"
+  },
+  {
+    "transcript": "Bravo, Bravo, take off and flight to Charlie.",
+    "command": {
+      "command_id": "406243c1",
+      "command_type": "takeoff",
+      "vehicle_callsign": "Bravo",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Bravo, Bravo, take off and flight to Charlie.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T04:46:48.146158"
+    },
+    "timestamp": "2026-03-20T04:46:48.146769"
+  },
+  {
+    "transcript": "Bravo, Bravo, take off and flight to Charlie.",
+    "command": {
+      "command_id": "16671b56",
+      "command_type": "move",
+      "vehicle_callsign": "Bravo",
+      "domain": "air",
+      "location": {
+        "lat": 44.655,
+        "lon": -63.578,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Bravo, Bravo, take off and flight to Charlie.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T04:46:48.146622"
+    },
+    "timestamp": "2026-03-20T04:46:48.161914"
+  },
+  {
+    "transcript": "Bravo. Approach and rally next to Alpha and stay there.",
+    "command": {
+      "command_id": "20267398",
+      "command_type": "move",
+      "vehicle_callsign": "Bravo",
+      "domain": "air",
+      "location": {
+        "lat": 44.6488,
+        "lon": -63.5752,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Bravo. Approach and rally next to Alpha and stay there.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T04:48:00.302187"
+    },
+    "timestamp": "2026-03-20T04:48:00.302679"
+  },
+  {
+    "transcript": "Bravo. Approach and rally next to Alpha and stay there.",
+    "command": {
+      "command_id": "17ce480a",
+      "command_type": "loiter",
+      "vehicle_callsign": "Bravo",
+      "domain": "air",
+      "location": {
+        "lat": 44.6488,
+        "lon": -63.5752,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Bravo. Approach and rally next to Alpha and stay there.",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T04:48:00.302562"
+    },
+    "timestamp": "2026-03-20T04:48:00.312466"
+  },
+  {
+    "transcript": "Engage combat with Alpha Bravo engage combat with Alpha Alpha is hostile",
+    "command": {
+      "command_id": "8119238d",
+      "command_type": "engage",
+      "vehicle_callsign": "Bravo",
+      "domain": "air",
+      "location": null,
+      "parameters": {
+        "target_uid": "Alpha"
+      },
+      "raw_transcript": "Engage combat with Alpha Bravo engage combat with Alpha Alpha is hostile",
+      "risk_level": "critical",
+      "requires_confirmation": true,
+      "timestamp": "2026-03-20T04:48:59.695072"
+    },
+    "timestamp": "2026-03-20T04:48:59.697176"
+  },
+  {
+    "transcript": "Engage combat with Alpha Bravo engage combat with Alpha Alpha is hostile",
+    "command": {
+      "command_id": "af1259ae",
+      "command_type": "classify",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": null,
+      "parameters": {
+        "contact_uid": "Alpha",
+        "new_affiliation": "hostile"
+      },
+      "raw_transcript": "Engage combat with Alpha Bravo engage combat with Alpha Alpha is hostile",
+      "risk_level": "medium",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-20T04:48:59.697062"
+    },
+    "timestamp": "2026-03-20T04:48:59.705882"
   }
 ]

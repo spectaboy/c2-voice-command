@@ -109,6 +109,36 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except OSError as exc:
         logger.warning("Could not connect to FTS on startup: %s", exc)
 
+    # Load pre-defined entities from battlespace config
+    try:
+        from src.shared.battlespace import load_entities
+        entities = load_entities()
+        for entity in entities:
+            uid = entity.get("uid", "")
+            if not uid:
+                continue
+            await tracker.update_contact(
+                uid=uid,
+                lat=entity.get("lat", 0.0),
+                lon=entity.get("lon", 0.0),
+                alt=entity.get("alt", 0.0),
+                heading=entity.get("heading", 0.0),
+                speed=entity.get("speed", 0.0),
+                domain=entity.get("domain", "ground"),
+            )
+            affiliation = entity.get("affiliation", "u")
+            threat_score = {"f": 0.0, "h": 1.0, "n": 0.0}.get(affiliation, 0.5)
+            await tracker.set_classification(
+                uid=uid,
+                affiliation=affiliation,
+                threat_score=threat_score,
+                confidence=1.0,
+                indicators=[f"Pre-loaded from battlespace config as '{affiliation}'"],
+            )
+            logger.info("Pre-loaded entity %s as %s", uid, affiliation)
+    except Exception as exc:
+        logger.warning("Failed to load battlespace entities: %s", exc)
+
     yield
 
     # Shutdown
@@ -212,6 +242,21 @@ async def health() -> dict:
     return {"status": "ok", "service": "iff-engine", "port": 8004}
 
 
+@app.get("/check/{uid}")
+async def check_contact(uid: str) -> dict:
+    """Check affiliation of a tracked contact. Used by coordinator for ENGAGE safety gate."""
+    contact = await tracker.get_contact(uid)
+    if contact is None:
+        return {"uid": uid, "found": False, "affiliation": "u", "threat_score": 0.5}
+    return {
+        "uid": uid,
+        "found": True,
+        "affiliation": contact.affiliation,
+        "threat_score": contact.threat_score,
+        "confidence": contact.confidence,
+    }
+
+
 @app.post("/classify", response_model=IFFAssessmentResponse)
 async def classify(req: ClassifyRequest) -> IFFAssessmentResponse:
     """Accept a kinematic update, run the rules engine, and return the assessment."""
@@ -288,7 +333,12 @@ async def manual_classify(req: ManualClassifyRequest) -> IFFAssessmentResponse:
     """Operator-initiated manual classification override."""
     contact = await tracker.get_contact(req.uid)
     if contact is None:
-        raise HTTPException(status_code=404, detail=f"Contact {req.uid!r} not found")
+        # Auto-create contact if it doesn't exist (e.g. fleet vehicles being classified)
+        contact = await tracker.update_contact(
+            uid=req.uid, lat=0.0, lon=0.0, alt=0.0,
+            heading=0.0, speed=0.0, domain="air",
+        )
+        logger.info("Auto-created contact %s for manual classification", req.uid)
 
     prev_affiliation: str = contact.affiliation
 

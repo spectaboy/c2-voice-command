@@ -17,16 +17,19 @@ import logging
 from pymavlink import mavutil
 from pymavlink.dialects.v10.ardupilotmega import MAVLink
 
-from src.shared.constants import VEHICLES
+from src.shared.battlespace import load_fleet
 
 logger = logging.getLogger(__name__)
 
-# Halifax Harbor
+# Halifax Harbor — forward operating base
 HOME_LAT = 44.6488
 HOME_LON = -63.5752
 
 # Slight offsets so vehicles don't stack on top of each other
 VEHICLE_OFFSETS = {
+    "Alpha": (0.0000,  0.0000),
+    "Bravo": (0.0003,  0.0003),
+    # Legacy 6-vehicle offsets
     "UAV-1": (0.0000,  0.0000),
     "UAV-2": (0.0005,  0.0005),
     "UAV-3": (0.0005, -0.0005),
@@ -138,9 +141,9 @@ class MockVehicle:
                     self._send_heartbeat(mav)
                     last_hb = now
 
-                # Telemetry at 4 Hz
-                if now - last_telem >= 0.25:
-                    self._update_physics(0.25)
+                # Telemetry at 10 Hz
+                if now - last_telem >= 0.1:
+                    self._update_physics(0.1)
                     self._send_telemetry(mav)
                     last_telem = now
 
@@ -266,17 +269,32 @@ class MockVehicle:
             self.battery = max(0.0, self.battery - 0.002 * dt)
 
         rtl_mode = 6 if self.is_copter else 11
+        land_mode = 9 if self.is_copter else 4  # LAND for copter, HOLD for rover
         if self.mode == rtl_mode:
             offset = VEHICLE_OFFSETS.get(self.callsign, (0, 0))
             self.target_lat = HOME_LAT + offset[0]
             self.target_lon = HOME_LON + offset[1]
             self.target_alt = 0.0 if not self.is_copter else 20.0
 
-        # Altitude only (takeoff)
+        # LAND mode: descend at 8m/s, disarm at ground
+        if self.is_copter and self.mode == land_mode and self.armed:
+            if self.alt_m > 0.3:
+                self.alt_m = max(0.0, self.alt_m - 8.0 * dt)
+                self.speed = 0.0
+                self.target_lat = None
+                self.target_lon = None
+                self.target_alt = None
+            else:
+                self.alt_m = 0.0
+                self.armed = False
+                self.mode = 0  # STABILIZE
+                logger.info(f"[{self.callsign}] Landed and disarmed")
+
+        # Altitude only (takeoff) — climb at 10m/s
         if self.target_alt is not None and self.target_lat is None:
             diff = self.target_alt - self.alt_m
             if abs(diff) > 0.5:
-                self.alt_m += math.copysign(min(2.0 * dt, abs(diff)), diff)
+                self.alt_m += math.copysign(min(10.0 * dt, abs(diff)), diff)
             else:
                 self.alt_m = self.target_alt
                 self.target_alt = None
@@ -289,7 +307,7 @@ class MockVehicle:
 
             if dist > 1.0:
                 self.heading = math.degrees(math.atan2(dlon, dlat)) % 360
-                max_speed = 10.0 if self.is_copter else 5.0
+                max_speed = 30.0 if self.is_copter else 15.0
                 self.speed = min(max_speed, dist)
                 move_m = min(max_speed * dt, dist)
                 move_deg = move_m / 111320
@@ -300,7 +318,7 @@ class MockVehicle:
                 if self.target_alt is not None:
                     alt_diff = self.target_alt - self.alt_m
                     if abs(alt_diff) > 0.5:
-                        self.alt_m += math.copysign(min(3.0 * dt, abs(alt_diff)), alt_diff)
+                        self.alt_m += math.copysign(min(10.0 * dt, abs(alt_diff)), alt_diff)
             else:
                 self.speed = 0.0
                 self.target_lat = None
@@ -326,8 +344,9 @@ def main():
     print("=" * 50)
     print()
 
+    fleet = load_fleet()
     vehicles = []
-    for callsign, cfg in VEHICLES.items():
+    for callsign, cfg in fleet.items():
         v = MockVehicle(
             callsign=callsign,
             port=cfg["sitl_port"],
@@ -340,7 +359,7 @@ def main():
         print(f"  {callsign:6s}  tcp:0.0.0.0:{cfg['sitl_port']}  ({cfg['type']})")
 
     print()
-    print(f"  {len(vehicles)}/6 vehicles listening.")
+    print(f"  {len(vehicles)}/{len(fleet)} vehicles listening.")
     print("  Press Ctrl+C to stop.")
     print("=" * 50)
 

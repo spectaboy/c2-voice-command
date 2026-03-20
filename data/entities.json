@@ -1,0 +1,68 @@
+[
+  {
+    "uid": "friendly-patrol-1",
+    "affiliation": "f",
+    "lat": 44.6510,
+    "lon": -63.5710,
+    "alt": 0.0,
+    "heading": 90.0,
+    "speed": 5.0,
+    "domain": "ground",
+    "name": "Friendly Patrol"
+  },
+  {
+    "uid": "friendly-helo-1",
+    "affiliation": "f",
+    "lat": 44.6530,
+    "lon": -63.5820,
+    "alt": 50.0,
+    "heading": 180.0,
+    "speed": 20.0,
+    "domain": "air",
+    "name": "Friendly Helicopter"
+  },
+  {
+    "uid": "hostile-vehicle-1",
+    "affiliation": "h",
+    "lat": 44.6550,
+    "lon": -63.5680,
+    "alt": 0.0,
+    "heading": 270.0,
+    "speed": 8.0,
+    "domain": "ground",
+    "name": "Hostile Vehicle"
+  },
+  {
+    "uid": "hostile-drone-1",
+    "affiliation": "h",
+    "lat": 44.6420,
+    "lon": -63.5630,
+    "alt": 80.0,
+    "heading": 45.0,
+    "speed": 15.0,
+    "domain": "air",
+    "name": "Hostile Drone"
+  },
+  {
+    "uid": "unknown-contact-1",
+    "affiliation": "u",
+    "lat": 44.6470,
+    "lon": -63.5650,
+    "alt": 0.0,
+    "heading": 0.0,
+    "speed": 3.0,
+    "domain": "ground",
+    "name": "Unknown Contact"
+  },
+  {
+    "uid": "unknown-air-1",
+    "affiliation": "u",
+    "lat": 44.6500,
+    "lon": -63.5600,
+    "alt": 120.0,
+    "heading": 200.0,
+    "speed": 25.0,
+    "domain": "air",
+    "name": "Unknown Aircraft"
+  }
+]

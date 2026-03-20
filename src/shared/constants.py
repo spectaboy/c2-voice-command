@@ -21,17 +21,26 @@ VEHICLES = {
 }
 
 # Callsign aliases for NLU resolution
+# Updated dynamically from fleet config, but keep common defaults
 CALLSIGN_ALIASES = {
-    "alpha": "UAV-1",
-    "bravo": "UAV-2",
-    "charlie": "UAV-3",
-    "delta": "UGV-1",
-    "echo": "UGV-2",
-    "foxtrot": "USV-1",
-    "the drone": "UAV-1",
-    "the rover": "UGV-1",
-    "the boat": "USV-1",
+    "alpha": "Alpha",
+    "bravo": "Bravo",
+    "drone 1": "Alpha",
+    "drone 2": "Bravo",
+    "the first drone": "Alpha",
+    "the second drone": "Bravo",
+    "the drone": "Alpha",
+    "uav 1": "Alpha",
+    "uav 2": "Bravo",
+    "uav-1": "Alpha",
+    "uav-2": "Bravo",
 }
+
+def get_active_vehicles():
+    """Get active vehicle config — delegates to battlespace loader if available."""
+    from src.shared.battlespace import load_fleet
+    return load_fleet()
+
 
 # CoT type strings (MIL-STD-2525)
 COT_TYPES = {

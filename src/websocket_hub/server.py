@@ -66,12 +66,8 @@ async def broadcast(msg: BroadcastMessage):
 
     _clients.difference_update(dead)
 
-    logger.info(
-        "Broadcast %s to %d clients (type=%s)",
-        msg.type,
-        len(_clients),
-        msg.type,
-    )
+    if msg.type not in ("position_update",):  # Suppress high-freq telemetry logs
+        logger.info("Broadcast %s → %d clients", msg.type, len(_clients))
     return {"status": "ok", "clients_notified": len(_clients)}
 
 

@@ -216,6 +216,13 @@ class MAVLinkClient:
         logger.info(f"[{self.callsign}] Move to ({lat:.6f}, {lon:.6f}, {alt}m)")
         return True
 
+    async def land(self) -> bool:
+        """Land at current position. Copters use LAND mode, rovers use HOLD."""
+        if self.is_copter:
+            return await self.set_mode("LAND")
+        else:
+            return await self.set_mode("HOLD")
+
     async def rtb(self) -> bool:
         """Return to base (set RTL mode)."""
         return await self.set_mode("RTL")

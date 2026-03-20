@@ -54,6 +54,11 @@ export interface VoiceTranscript {
   confidence: number;    // 0.0-1.0
   parsed_command?: MilitaryCommand;
   timestamp: string;
+  // Enhanced display fields for command results
+  status?: 'executed' | 'blocked' | 'error' | 'confirmation';
+  status_message?: string;
+  command_type?: string;
+  vehicle_callsign?: string;
 }
 
 export interface ConfirmationRequest {
@@ -79,7 +84,9 @@ export type WSMessageType =
   | 'iff_change'
   | 'command_ack'
   | 'voice_transcript'
-  | 'confirmation_required';
+  | 'confirmation_required'
+  | 'command_result'
+  | 'command_error';
 
 export interface WSMessage {
   type: WSMessageType;
@@ -113,4 +120,4 @@ export const AFFILIATION_LABELS: Record<string, string> = {
   n: 'NEUTRAL',
 };
 
-export const MAX_TRAIL_LENGTH = 30;
+export const MAX_TRAIL_LENGTH = 200;

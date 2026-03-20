@@ -14,23 +14,28 @@ from src.vehicles.cot_sender import CoTSender
 
 logger = logging.getLogger(__name__)
 
+# Suppress httpx noise from telemetry broadcast loop
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 # Global instances
 vehicle_manager: VehicleManager | None = None
 cot_generator: CoTGenerator | None = None
 cot_sender: CoTSender | None = None
 telemetry_task: asyncio.Task | None = None
 ws_clients: set[WebSocket] = set()
+_http_client: httpx.AsyncClient | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global vehicle_manager, cot_generator, cot_sender, telemetry_task
+    global vehicle_manager, cot_generator, cot_sender, telemetry_task, _http_client
 
     logging.basicConfig(level=logging.INFO)
 
     vehicle_manager = VehicleManager()
     cot_generator = CoTGenerator()
     cot_sender = CoTSender(port=FTS_COT_PORT)
+    _http_client = httpx.AsyncClient(timeout=2.0)
 
     # Connect to SITL instances
     await vehicle_manager.connect_all()
@@ -51,6 +56,8 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
+    if _http_client:
+        await _http_client.aclose()
     await cot_sender.disconnect()
     await vehicle_manager.disconnect_all()
 
@@ -133,11 +140,11 @@ async def ws_telemetry(ws: WebSocket):
 
 
 async def _telemetry_loop():
-    """1 Hz loop: broadcast telemetry via WebSocket and send CoT to FTS."""
+    """4 Hz loop: broadcast telemetry via WebSocket and send CoT to FTS."""
     global ws_clients
     while True:
         try:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.25)
 
             if vehicle_manager is None:
                 continue
@@ -156,15 +163,14 @@ async def _telemetry_loop():
                 ws_clients -= dead
 
             # Broadcast each vehicle status to the WebSocket Hub for the dashboard
-            if statuses:
+            if statuses and _http_client:
                 hub_url = f"http://localhost:{WS_PORT}/broadcast"
                 try:
-                    async with httpx.AsyncClient(timeout=2.0) as client:
-                        for status in statuses:
-                            await client.post(hub_url, json={
-                                "type": "position_update",
-                                "payload": status.model_dump(mode="json"),
-                            })
+                    for status in statuses:
+                        await _http_client.post(hub_url, json={
+                            "type": "position_update",
+                            "payload": status.model_dump(mode="json"),
+                        })
                 except Exception:
                     pass  # Hub may not be running
 

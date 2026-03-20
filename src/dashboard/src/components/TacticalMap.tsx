@@ -2,9 +2,9 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import type { VehicleStatus } from '../types';
 import VehicleMarkerComponent from './markers/VehicleMarker';
 
-// SITL default area — Ottawa region
-const DEFAULT_CENTER: [number, number] = [45.3154, -75.6714];
-const DEFAULT_ZOOM = 13;
+// SITL default area — Halifax Harbor
+const DEFAULT_CENTER: [number, number] = [44.6488, -63.5752];
+const DEFAULT_ZOOM = 14;
 
 interface Props {
   vehicles: Map<string, VehicleStatus>;
