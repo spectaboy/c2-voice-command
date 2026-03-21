@@ -9,9 +9,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from typing import Optional
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+# When FreeTAKServer is not running, IFF/telemetry can call send_cot very often;
+# without backoff, every attempt logs a warning and wastes CPU.
+_RECONNECT_DELAY_INITIAL = 3.0
+_RECONNECT_DELAY_MAX = 60.0
 
 
 class CoTSender:
@@ -31,6 +37,8 @@ class CoTSender:
         self._reader: Optional[asyncio.StreamReader] = None
         self._writer: Optional[asyncio.StreamWriter] = None
         self._connected: bool = False
+        self._next_reconnect_mono: float = 0.0
+        self._reconnect_delay: float = _RECONNECT_DELAY_INITIAL
 
     # ------------------------------------------------------------------
     # Public properties
@@ -59,6 +67,7 @@ class CoTSender:
             self._host, self._port,
         )
         self._connected = True
+        self._reconnect_delay = _RECONNECT_DELAY_INITIAL
         logger.info("Connected to FTS at %s:%d", self._host, self._port)
 
     async def disconnect(self) -> None:
@@ -135,20 +144,33 @@ class CoTSender:
     async def _reconnect(self) -> bool:
         """Try to re-establish the TCP connection (single attempt).
 
+        Uses exponential backoff between attempts so high-rate callers (e.g. IFF
+        ``/classify``) do not flood logs or busy-loop when FTS is down.
+
         Returns
         -------
         bool
             ``True`` if the reconnection succeeded, ``False`` otherwise.
         """
+        now = time.monotonic()
+        if now < self._next_reconnect_mono:
+            return False
+
         try:
             await self.connect()
             return True
         except OSError as exc:
+            self._connected = False
+            self._next_reconnect_mono = now + self._reconnect_delay
             logger.warning(
-                "Could not reconnect to FTS at %s:%d — %s",
+                "Could not reconnect to FTS at %s:%d — %s (next try in ~%.0fs)",
                 self._host,
                 self._port,
                 exc,
+                self._reconnect_delay,
             )
-            self._connected = False
+            self._reconnect_delay = min(
+                self._reconnect_delay * 2,
+                _RECONNECT_DELAY_MAX,
+            )
             return False

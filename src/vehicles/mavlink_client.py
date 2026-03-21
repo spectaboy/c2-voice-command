@@ -210,10 +210,28 @@ class MAVLinkClient:
             await self.takeoff(alt if alt > 0 else 10.0)
             await asyncio.sleep(2.0)
 
+        # ArduPilot guided: COMMAND_INT + DO_REPOSITION is the most reliable path
+        # (SET_POSITION_TARGET alone is sometimes ignored depending on mode/EKF).
+        await asyncio.to_thread(
+            self.conn.mav.command_int_send,
+            self.conn.target_system,
+            self.conn.target_component,
+            mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+            mavutil.mavlink.MAV_CMD_DO_REPOSITION,
+            0,
+            0,
+            -1.0,  # default ground speed
+            float(mavutil.mavlink.MAV_DO_REPOSITION_FLAGS_CHANGE_MODE),
+            0.0,
+            float("nan"),  # yaw: NaN = vehicle default
+            int(lat * 1e7),
+            int(lon * 1e7),
+            float(alt),
+        )
+
         type_mask = (
             0b0000_1111_1111_1000  # ignore velocity, accel, yaw; use position only
         )
-
         await asyncio.to_thread(
             self.conn.mav.set_position_target_global_int_send,
             0,  # time_boot_ms
@@ -223,7 +241,7 @@ class MAVLinkClient:
             type_mask,
             int(lat * 1e7),
             int(lon * 1e7),
-            alt,
+            float(alt),
             0, 0, 0,  # velocity
             0, 0, 0,  # acceleration
             0, 0,     # yaw, yaw_rate

@@ -234,6 +234,7 @@ One include / one `arducopter` **`-I0 --sysid 1`** is enough; use `data/fleet_on
 | NLU returns 422 | Whisper misheard the command | Check `src/nlu/data/command_log.json` for the raw transcript, rephrase |
 | Dashboard won't connect | WebSocket hub (8005) not running | Verify `start_all.py` shows WS Hub as UP |
 | "No vehicles connected" | SITL instances not running or wrong port | Ensure Terminals 2+3 show `APM: ArduPilot Ready` before starting services |
-| Drone doesn't move in Gazebo | SITL connected but Gazebo plugin not bridging | Restart Gazebo (Terminal 1), then SITL instances |
+| Drone doesn't move in Gazebo | **MAVLink OK ≠ sim bridge OK** — `connected_vehicles` is TCP to SITL; motion needs **JSON FDM** (UDP) between `arducopter --model JSON` and Gazebo `iris_*` plugins (**9002** / **9012**) | Start **Gazebo server first** (`./launch_gz.sh`), then **both** `arducopter` processes; confirm no `bind` errors on 9002. See §6b FDM column. |
+| Two-ship collision at same POI | NLU emitted identical lat/lon for each callsign | **Voice path:** `apply_formation_separation` spreads E–W (~22 m slots) + small alt stagger (~7 m per slot) for commands in the **same parse batch**. Env: `FORMATION_SPACING_M`, `FORMATION_ALT_STAGGER_M`, or `FORMATION_SEPARATION=0` to disable. |
 | `ANTHROPIC_API_KEY` error | Key not set or expired | `$env:ANTHROPIC_API_KEY="sk-..."` before running `start_all.py` |
 | Compound command only runs first part | 2s delay may not be enough for slow SITL | Increase sleep in `server.py:344` or wait for first command to complete |

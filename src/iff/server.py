@@ -323,7 +323,8 @@ async def _push_cot(
     )
     sent: bool = await cot_sender.send_cot(xml)
     if not sent:
-        logger.warning("Failed to send CoT for %s to FTS", uid)
+        # Expected when FreeTAKServer is not running; avoid per-tick WARNING spam.
+        logger.debug("Failed to send CoT for %s to FTS (offline or reconnect backoff)", uid)
 
 
 def _build_assessment(

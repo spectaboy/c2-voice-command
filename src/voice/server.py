@@ -13,6 +13,7 @@ import numpy as np
 from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.shared.formation_separation import apply_formation_separation
 from src.voice.config import HOST, NLU_URL, PORT, SAMPLE_RATE, WS_HUB_URL
 from src.voice.transcriber import Transcriber
 from src.voice.tts import speak_with_effects
@@ -174,6 +175,9 @@ async def ws_voice(ws: WebSocket) -> None:
     try:
         while True:
             msg = await ws.receive()
+            # Starlette marks client disconnect; must exit — do not call receive() again.
+            if msg.get("type") == "websocket.disconnect":
+                break
 
             if "text" in msg:
                 data = json.loads(msg["text"])
@@ -301,6 +305,8 @@ async def _emit_transcript(result: dict) -> None:
                 if not commands:
                     logger.warning("NLU returned no commands for: %s", result["transcript"])
                     await _broadcast_error("Could not parse command. Please try again.")
+                # Same waypoint for multiple aircraft in one utterance → lateral + alt separation
+                commands = apply_formation_separation(commands)
                 for i, cmd in enumerate(commands):
                     logger.info("Forwarding command %d/%d to coordinator: %s %s",
                                 i + 1, len(commands),
