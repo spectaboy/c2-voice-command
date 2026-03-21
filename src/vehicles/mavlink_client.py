@@ -31,15 +31,17 @@ class MAVLinkClient:
         self,
         callsign: str,
         host: str,
-        port: int,
+        port: int | str,
         sysid: int,
         vehicle_type: str,
         domain: str,
+        connection_string: str | None = None,
     ):
         self.callsign = callsign
         self.host = host
         self.port = port
         self.sysid = sysid
+        self.connection_string = connection_string
         self.vehicle_type = vehicle_type  # "ArduCopter" or "Rover"
         self.domain = domain
         self.conn: Optional[mavutil.mavfile] = None
@@ -74,8 +76,14 @@ class MAVLinkClient:
         return (time.time() - self._last_heartbeat) < HEARTBEAT_TIMEOUT
 
     async def connect(self) -> None:
-        """Open TCP connection to SITL and wait for first heartbeat."""
-        addr = f"tcp:{self.host}:{self.port}"
+        """Open connection to SITL and wait for first heartbeat."""
+        if self.connection_string:
+            addr = self.connection_string
+        elif isinstance(self.port, str):
+            # String port like "mcast:" — use directly
+            addr = self.port
+        else:
+            addr = f"tcp:{self.host}:{self.port}"
         logger.info(f"[{self.callsign}] Connecting to {addr}")
 
         self.conn = await asyncio.to_thread(

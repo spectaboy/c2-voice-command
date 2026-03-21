@@ -1,0 +1,69 @@
+{
+    "launch pad": {"lat": 32.99, "lon": -106.9754291},
+    "the launch pad": {"lat": 32.99, "lon": -106.9754291},
+    "landing pad": {"lat": 32.99, "lon": -106.9754291},
+    "the landing pad": {"lat": 32.99, "lon": -106.9754291},
+    "the pad": {"lat": 32.99, "lon": -106.9754291},
+    "home": {"lat": 32.99, "lon": -106.9754291},
+
+    "gate": {"lat": 32.99, "lon": -106.9756437},
+    "the gate": {"lat": 32.99, "lon": -106.9756437},
+    "west gate": {"lat": 32.99, "lon": -106.9756437},
+    "the west gate": {"lat": 32.99, "lon": -106.9756437},
+
+    "northwest tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "northwest watch tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "NW tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "the northwest tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "the northwest watch tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "tower NW": {"lat": 32.9903329, "lon": -106.9756115},
+
+    "northeast tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "northeast watch tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "NE tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "the northeast tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "the northeast watch tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "tower NE": {"lat": 32.9903329, "lon": -106.9743885},
+
+    "southeast tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "southeast watch tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "SE tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "the southeast tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "the southeast watch tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "tower SE": {"lat": 32.9896671, "lon": -106.9743885},
+
+    "southwest tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "southwest watch tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "SW tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "the southwest tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "the southwest watch tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "tower SW": {"lat": 32.9896671, "lon": -106.9756115},
+
+    "command building": {"lat": 32.990126, "lon": -106.9747318},
+    "the command building": {"lat": 32.990126, "lon": -106.9747318},
+    "command": {"lat": 32.990126, "lon": -106.9747318},
+    "the rooftop": {"lat": 32.990126, "lon": -106.9747318},
+    "rooftop": {"lat": 32.990126, "lon": -106.9747318},
+
+    "containers": {"lat": 32.9898515, "lon": -106.9749839},
+    "the containers": {"lat": 32.9898515, "lon": -106.9749839},
+    "shipping containers": {"lat": 32.9898515, "lon": -106.9749839},
+    "the shipping containers": {"lat": 32.9898515, "lon": -106.9749839},
+
+    "motor pool": {"lat": 32.98982, "lon": -106.9745923},
+    "the motor pool": {"lat": 32.98982, "lon": -106.9745923},
+
+    "fuel depot": {"lat": 32.9897121, "lon": -106.9752897},
+    "the fuel depot": {"lat": 32.9897121, "lon": -106.9752897},
+
+    "comms tower": {"lat": 32.9902699, "lon": -106.9745709},
+    "the comms tower": {"lat": 32.9902699, "lon": -106.9745709},
+    "communications tower": {"lat": 32.9902699, "lon": -106.9745709},
+    "the communications tower": {"lat": 32.9902699, "lon": -106.9745709},
+
+    "barracks north": {"lat": 32.990225, "lon": -106.9752146},
+    "the north barracks": {"lat": 32.990225, "lon": -106.9752146},
+    "barracks south": {"lat": 32.989775, "lon": -106.9752146},
+    "the south barracks": {"lat": 32.989775, "lon": -106.9752146},
+    "barracks": {"lat": 32.990225, "lon": -106.9752146}
+}

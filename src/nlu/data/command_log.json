@@ -520,381 +520,324 @@
     "timestamp": "2026-03-20T08:28:42.912513"
   },
   {
-    "transcript": "Move Alpha forward 10 meters.",
+    "transcript": "Take off to 10 meters",
     "command": {
-      "command_id": "8d56309f",
-      "command_type": "status",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": null,
-      "parameters": {},
-      "raw_transcript": "Move Alpha forward 10 meters.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-20T08:37:53.402020"
-    },
-    "timestamp": "2026-03-20T08:37:53.402275"
-  },
-  {
-    "transcript": "The Alpha scouts the round the runway.",
-    "command": {
-      "command_id": "c5987765",
-      "command_type": "patrol",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": null,
-      "parameters": {
-        "waypoints": [
-          {
-            "lat": 44.6488,
-            "lon": -63.5752,
-            "alt_m": 100
-          },
-          {
-            "lat": 44.652,
-            "lon": -63.57,
-            "alt_m": 100
-          },
-          {
-            "lat": 44.655,
-            "lon": -63.578,
-            "alt_m": 100
-          },
-          {
-            "lat": 44.6488,
-            "lon": -63.5752,
-            "alt_m": 100
-          }
-        ]
-      },
-      "raw_transcript": "The Alpha scouts the round the runway.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-20T08:38:48.063573"
-    },
-    "timestamp": "2026-03-20T08:38:48.063814"
-  },
-  {
-    "transcript": "Alpha loiter at the bridge",
-    "command": {
-      "command_id": "4091c83e",
-      "command_type": "loiter",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": {
-        "lat": 44.649,
-        "lon": -63.5727,
-        "alt_m": 100.0,
-        "grid_ref": null
-      },
-      "parameters": {},
-      "raw_transcript": "Alpha loiter at the bridge",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:15:23.052949"
-    },
-    "timestamp": "2026-03-21T07:15:23.053441"
-  },
-  {
-    "transcript": "Alpha patrol between the bridge and the dockyard",
-    "command": {
-      "command_id": "06a9b9fc",
-      "command_type": "patrol",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": null,
-      "parameters": {
-        "waypoints": [
-          {
-            "lat": 44.649,
-            "lon": -63.5727
-          },
-          {
-            "lat": 44.662,
-            "lon": -63.588
-          }
-        ]
-      },
-      "raw_transcript": "Alpha patrol between the bridge and the dockyard",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:15:29.116852"
-    },
-    "timestamp": "2026-03-21T07:15:29.117022"
-  },
-  {
-    "transcript": "Alpha patrol between the bridge and the dockyard",
-    "command": {
-      "command_id": "503c5654",
-      "command_type": "patrol",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": {
-        "lat": 44.649,
-        "lon": -63.5727,
-        "alt_m": 100.0,
-        "grid_ref": null
-      },
-      "parameters": {
-        "waypoints": [
-          {
-            "lat": 44.649,
-            "lon": -63.5727
-          },
-          {
-            "lat": 44.662,
-            "lon": -63.588
-          }
-        ]
-      },
-      "raw_transcript": "Alpha patrol between the bridge and the dockyard",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:18:07.090224"
-    },
-    "timestamp": "2026-03-21T07:18:07.090402"
-  },
-  {
-    "transcript": "Alpha patrol between Citadel Hill and the Dockyard",
-    "command": {
-      "command_id": "9ebaa062",
-      "command_type": "patrol",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": {
-        "lat": 44.6478,
-        "lon": -63.5802,
-        "alt_m": 100.0,
-        "grid_ref": null
-      },
-      "parameters": {
-        "waypoints": [
-          {
-            "lat": 44.6478,
-            "lon": -63.5802
-          },
-          {
-            "lat": 44.662,
-            "lon": -63.588
-          }
-        ]
-      },
-      "raw_transcript": "Alpha patrol between Citadel Hill and the Dockyard",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:19:45.450287"
-    },
-    "timestamp": "2026-03-21T07:19:45.450444"
-  },
-  {
-    "transcript": "Bravo loiter at Georges Island",
-    "command": {
-      "command_id": "9ff81689",
-      "command_type": "loiter",
-      "vehicle_callsign": "Bravo",
-      "domain": "air",
-      "location": {
-        "lat": 44.638,
-        "lon": -63.562,
-        "alt_m": 100.0,
-        "grid_ref": null
-      },
-      "parameters": {},
-      "raw_transcript": "Bravo loiter at Georges Island",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:19:50.870402"
-    },
-    "timestamp": "2026-03-21T07:19:50.870506"
-  },
-  {
-    "transcript": "Alpha engage hostile one",
-    "command": {
-      "command_id": "1b60402e",
-      "command_type": "engage",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": null,
-      "parameters": {
-        "target_uid": "HOSTILE-01"
-      },
-      "raw_transcript": "Alpha engage hostile one",
-      "risk_level": "critical",
-      "requires_confirmation": true,
-      "timestamp": "2026-03-21T07:19:56.297008"
-    },
-    "timestamp": "2026-03-21T07:19:56.297144"
-  },
-  {
-    "transcript": "Alpha takeoff to 15.4 meters and hold.",
-    "command": {
-      "command_id": "9213a7cb",
+      "command_id": "627d68ed",
       "command_type": "takeoff",
       "vehicle_callsign": "Alpha",
       "domain": "air",
       "location": null,
       "parameters": {
-        "alt_m": 15.4
+        "alt_m": 10
       },
-      "raw_transcript": "Alpha takeoff to 15.4 meters and hold.",
+      "raw_transcript": "Take off to 10 meters",
       "risk_level": "low",
       "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:37:48.396260"
+      "timestamp": "2026-03-21T15:56:51.736112"
     },
-    "timestamp": "2026-03-21T07:37:48.397511"
+    "timestamp": "2026-03-21T15:56:51.736291"
   },
   {
-    "transcript": "Alpha takeoff to 15.4 meters and hold.",
+    "transcript": "Fly north 50 meters",
     "command": {
-      "command_id": "a62c9965",
-      "command_type": "loiter",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": {
-        "lat": -35.363262,
-        "lon": 149.165237,
-        "alt_m": 15.4,
-        "grid_ref": null
-      },
-      "parameters": {},
-      "raw_transcript": "Alpha takeoff to 15.4 meters and hold.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:37:48.397228"
-    },
-    "timestamp": "2026-03-21T07:37:48.401327"
-  },
-  {
-    "transcript": "Alpha, takeoff to 25 meters and stay there.",
-    "command": {
-      "command_id": "4d54f8b0",
-      "command_type": "takeoff",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": null,
-      "parameters": {
-        "alt_m": 25
-      },
-      "raw_transcript": "Alpha, takeoff to 25 meters and stay there.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:38:26.179008"
-    },
-    "timestamp": "2026-03-21T07:38:26.179937"
-  },
-  {
-    "transcript": "Alpha, takeoff to 25 meters and stay there.",
-    "command": {
-      "command_id": "c613117d",
-      "command_type": "loiter",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": {
-        "lat": -35.363262,
-        "lon": 149.165237,
-        "alt_m": 25.0,
-        "grid_ref": null
-      },
-      "parameters": {},
-      "raw_transcript": "Alpha, takeoff to 25 meters and stay there.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:38:26.179723"
-    },
-    "timestamp": "2026-03-21T07:38:26.195307"
-  },
-  {
-    "transcript": "Alpha, takeoff to 25 meters.",
-    "command": {
-      "command_id": "a6b5ad91",
-      "command_type": "takeoff",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": null,
-      "parameters": {
-        "alt_m": 25
-      },
-      "raw_transcript": "Alpha, takeoff to 25 meters.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:38:52.427453"
-    },
-    "timestamp": "2026-03-21T07:38:52.428134"
-  },
-  {
-    "transcript": "Alpha, loiter at citadel hill.",
-    "command": {
-      "command_id": "a84b4457",
-      "command_type": "loiter",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": {
-        "lat": 44.6478,
-        "lon": -63.5802,
-        "alt_m": 100.0,
-        "grid_ref": null
-      },
-      "parameters": {},
-      "raw_transcript": "Alpha, loiter at citadel hill.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:40:00.086822"
-    },
-    "timestamp": "2026-03-21T07:40:00.087013"
-  },
-  {
-    "transcript": "Alpha, take off 20 meters and stay in the air and fly forward 20 meters and stay in the air. Don't fall down.",
-    "command": {
-      "command_id": "e454c1bc",
-      "command_type": "takeoff",
-      "vehicle_callsign": "Alpha",
-      "domain": "air",
-      "location": null,
-      "parameters": {
-        "alt_m": 20
-      },
-      "raw_transcript": "Alpha, take off 20 meters and stay in the air and fly forward 20 meters and stay in the air. Don't fall down.",
-      "risk_level": "low",
-      "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:40:46.858125"
-    },
-    "timestamp": "2026-03-21T07:40:46.859178"
-  },
-  {
-    "transcript": "Alpha, take off 20 meters and stay in the air and fly forward 20 meters and stay in the air. Don't fall down.",
-    "command": {
-      "command_id": "489ec535",
+      "command_id": "cc6a93b4",
       "command_type": "move",
       "vehicle_callsign": "Alpha",
       "domain": "air",
       "location": {
-        "lat": -35.343262,
-        "lon": 149.165237,
-        "alt_m": 20.0,
+        "lat": 0.00044991169133322515,
+        "lon": 0.0,
+        "alt_m": 0.0,
+        "grid_ref": null
+      },
+      "parameters": {
+        "original_tool": "move_relative"
+      },
+      "raw_transcript": "Fly north 50 meters",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:56:52.835570"
+    },
+    "timestamp": "2026-03-21T15:56:52.835692"
+  },
+  {
+    "transcript": "Fly to the northwest watch tower",
+    "command": {
+      "command_id": "8dafe093",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 32.9903329,
+        "lon": -106.9756115,
+        "alt_m": 100.0,
         "grid_ref": null
       },
       "parameters": {},
-      "raw_transcript": "Alpha, take off 20 meters and stay in the air and fly forward 20 meters and stay in the air. Don't fall down.",
+      "raw_transcript": "Fly to the northwest watch tower",
       "risk_level": "low",
       "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:40:46.858932"
+      "timestamp": "2026-03-21T15:56:54.100828"
     },
-    "timestamp": "2026-03-21T07:40:46.871105"
+    "timestamp": "2026-03-21T15:56:54.100913"
   },
   {
-    "transcript": "Alpha, come back to your starting point.",
+    "transcript": "Descend to 5 meters",
     "command": {
-      "command_id": "f549ec40",
+      "command_id": "2d972f66",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 0.0,
+        "lon": 0.0,
+        "alt_m": 5.0,
+        "grid_ref": null
+      },
+      "parameters": {
+        "original_tool": "set_altitude"
+      },
+      "raw_transcript": "Descend to 5 meters",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:56:54.935938"
+    },
+    "timestamp": "2026-03-21T15:56:54.936014"
+  },
+  {
+    "transcript": "Fly east to the command building",
+    "command": {
+      "command_id": "d51202fc",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 32.990126,
+        "lon": -106.9747318,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Fly east to the command building",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:56:55.921204"
+    },
+    "timestamp": "2026-03-21T15:56:55.921295"
+  },
+  {
+    "transcript": "Climb to 12 meters and hover over the rooftop",
+    "command": {
+      "command_id": "d786e4b2",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 0.0,
+        "lon": 0.0,
+        "alt_m": 12.0,
+        "grid_ref": null
+      },
+      "parameters": {
+        "original_tool": "set_altitude"
+      },
+      "raw_transcript": "Climb to 12 meters and hover over the rooftop",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:56:57.403061"
+    },
+    "timestamp": "2026-03-21T15:56:57.403389"
+  },
+  {
+    "transcript": "Climb to 12 meters and hover over the rooftop",
+    "command": {
+      "command_id": "1d3d0022",
+      "command_type": "loiter",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 32.990126,
+        "lon": -106.9747318,
+        "alt_m": 12.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Climb to 12 meters and hover over the rooftop",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:56:57.403312"
+    },
+    "timestamp": "2026-03-21T15:56:57.405640"
+  },
+  {
+    "transcript": "Fly to the fuel depot",
+    "command": {
+      "command_id": "b3a89590",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 32.9897121,
+        "lon": -106.9752897,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Fly to the fuel depot",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:56:58.506036"
+    },
+    "timestamp": "2026-03-21T15:56:58.506223"
+  },
+  {
+    "transcript": "Report current position and altitude",
+    "command": {
+      "command_id": "e5121f15",
+      "command_type": "status",
+      "vehicle_callsign": "all",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Report current position and altitude",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:56:59.325535"
+    },
+    "timestamp": "2026-03-21T15:56:59.325617"
+  },
+  {
+    "transcript": "Fly south to the shipping containers",
+    "command": {
+      "command_id": "5855b1dd",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 32.9898515,
+        "lon": -106.9749839,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Fly south to the shipping containers",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:57:00.366819"
+    },
+    "timestamp": "2026-03-21T15:57:00.367034"
+  },
+  {
+    "transcript": "Drop to 3 meters and enter the motor pool",
+    "command": {
+      "command_id": "f37c523b",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 0.0,
+        "lon": 0.0,
+        "alt_m": 3.0,
+        "grid_ref": null
+      },
+      "parameters": {
+        "original_tool": "set_altitude"
+      },
+      "raw_transcript": "Drop to 3 meters and enter the motor pool",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:57:01.767422"
+    },
+    "timestamp": "2026-03-21T15:57:01.767713"
+  },
+  {
+    "transcript": "Drop to 3 meters and enter the motor pool",
+    "command": {
+      "command_id": "bd80d40d",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 32.98982,
+        "lon": -106.9745923,
+        "alt_m": 100.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Drop to 3 meters and enter the motor pool",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:57:01.767644"
+    },
+    "timestamp": "2026-03-21T15:57:01.773036"
+  },
+  {
+    "transcript": "Go to the northeast tower at 15 meters altitude",
+    "command": {
+      "command_id": "b5989c41",
+      "command_type": "move",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": {
+        "lat": 32.9903329,
+        "lon": -106.9743885,
+        "alt_m": 15.0,
+        "grid_ref": null
+      },
+      "parameters": {},
+      "raw_transcript": "Go to the northeast tower at 15 meters altitude",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:57:03.188648"
+    },
+    "timestamp": "2026-03-21T15:57:03.188773"
+  },
+  {
+    "transcript": "Head back to the landing pad",
+    "command": {
+      "command_id": "904d7a00",
       "command_type": "rtb",
       "vehicle_callsign": "Alpha",
       "domain": "air",
       "location": null,
       "parameters": {},
-      "raw_transcript": "Alpha, come back to your starting point.",
+      "raw_transcript": "Head back to the landing pad",
       "risk_level": "low",
       "requires_confirmation": false,
-      "timestamp": "2026-03-21T07:42:07.479999"
+      "timestamp": "2026-03-21T15:57:04.429442"
     },
-    "timestamp": "2026-03-21T07:42:07.480335"
+    "timestamp": "2026-03-21T15:57:04.429521"
+  },
+  {
+    "transcript": "Land",
+    "command": {
+      "command_id": "30a1b6bf",
+      "command_type": "land",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Land",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:57:05.234698"
+    },
+    "timestamp": "2026-03-21T15:57:05.234780"
+  },
+  {
+    "transcript": "Turn off the engines and self-destruct",
+    "command": {
+      "command_id": "10c17abb",
+      "command_type": "land",
+      "vehicle_callsign": "Alpha",
+      "domain": "air",
+      "location": null,
+      "parameters": {},
+      "raw_transcript": "Turn off the engines and self-destruct",
+      "risk_level": "low",
+      "requires_confirmation": false,
+      "timestamp": "2026-03-21T15:57:07.067755"
+    },
+    "timestamp": "2026-03-21T15:57:07.067818"
   }
 ]

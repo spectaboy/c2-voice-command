@@ -20,13 +20,19 @@ class VehicleManager:
 
         fleet = get_active_vehicles()
         for callsign, cfg in fleet.items():
+            sitl_port = cfg["sitl_port"]
+            # If sitl_port is a string (e.g. "mcast:"), use it as connection string directly
+            connection_string = None
+            if isinstance(sitl_port, str):
+                connection_string = sitl_port
             self._clients[callsign] = MAVLinkClient(
                 callsign=callsign,
                 host=host,
-                port=cfg["sitl_port"],
+                port=sitl_port if isinstance(sitl_port, int) else 0,
                 sysid=cfg["sysid"],
                 vehicle_type=cfg["type"],
                 domain=cfg["domain"],
+                connection_string=connection_string,
             )
 
     async def connect_all(self, retries: int = 5, delay: float = 3.0) -> dict[str, bool]:

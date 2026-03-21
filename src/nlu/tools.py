@@ -243,6 +243,60 @@ TOOLS = [
         },
     },
     {
+        "name": "move_relative",
+        "description": (
+            "Move a vehicle a specified distance in a cardinal or intercardinal direction "
+            "from its current position. Use for 'fly north 50 meters', 'go east 30 meters', "
+            "'move south 100 meters', 'head northwest 40 meters'. "
+            "Also use for 'descend to X meters' or 'climb to X meters' when only altitude changes."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "callsign": {
+                    "type": "string",
+                    "description": "Vehicle callsign",
+                },
+                "direction": {
+                    "type": "string",
+                    "enum": ["north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest"],
+                    "description": "Cardinal or intercardinal direction to fly",
+                },
+                "distance_m": {
+                    "type": "number",
+                    "description": "Distance to travel in meters",
+                },
+                "alt_m": {
+                    "type": "number",
+                    "description": "Target altitude in meters AGL (if altitude change is specified)",
+                },
+            },
+            "required": ["callsign"],
+        },
+    },
+    {
+        "name": "set_altitude",
+        "description": (
+            "Change a vehicle's altitude without changing horizontal position. "
+            "Use for 'descend to 5 meters', 'climb to 12 meters', 'drop to 3 meters', "
+            "'ascend to 20 meters', 'go up to 15 meters', 'go down to 5 meters'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "callsign": {
+                    "type": "string",
+                    "description": "Vehicle callsign",
+                },
+                "alt_m": {
+                    "type": "number",
+                    "description": "Target altitude in meters AGL",
+                },
+            },
+            "required": ["callsign", "alt_m"],
+        },
+    },
+    {
         "name": "land_vehicle",
         "description": (
             "Command a vehicle to land at its current position. "
@@ -274,4 +328,6 @@ TOOL_TO_COMMAND_TYPE = {
     "engage_target": "engage",
     "takeoff_vehicle": "takeoff",
     "land_vehicle": "land",
+    "move_relative": "move_relative",
+    "set_altitude": "set_altitude",
 }

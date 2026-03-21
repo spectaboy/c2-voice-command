@@ -1,6 +1,9 @@
 """FastAPI Coordinator service — port 8000."""
 
+import json
 import logging
+import math
+import os
 
 import httpx
 from dotenv import load_dotenv
@@ -17,6 +20,53 @@ from .router import lookup_iff, route_command
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+# ── No-Go Zone Support ──────────────────────────────────────────────────────
+
+def _load_no_go_zones() -> list[dict]:
+    """Load no-go zones from BATTLESPACE_NO_GO_ZONES env var or default path."""
+    path = os.environ.get(
+        "BATTLESPACE_NO_GO_ZONES",
+        os.path.join(os.path.dirname(__file__), "..", "..", "data", "compound", "no_go_zones.json"),
+    )
+    if not os.path.isfile(path):
+        return []
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning("Failed to load no-go zones from %s: %s", path, e)
+        return []
+
+
+def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance between two points in meters."""
+    R = 6371000.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def check_no_go_zones(lat: float, lon: float, alt_m: float) -> str | None:
+    """Return rejection reason if (lat, lon, alt) falls in a no-go zone, else None."""
+    for zone in _no_go_zones:
+        dist = _haversine_m(lat, lon, zone["lat"], zone["lon"])
+        if dist <= zone["radius_m"]:
+            alt_ceil = zone.get("alt_ceil_m")
+            if alt_ceil is None:
+                # Absolute no-go at all altitudes
+                return f"Target location is within the {zone['name']} no-go zone."
+            elif alt_m < alt_ceil:
+                return (
+                    f"Target location is within the {zone['name']} no-go zone "
+                    f"(restricted below {alt_ceil}m AGL, commanded altitude: {alt_m}m)."
+                )
+    return None
+
+
+_no_go_zones = _load_no_go_zones()
 
 app = FastAPI(title="Coordinator", version="1.0.0")
 app.add_middleware(
@@ -125,6 +175,21 @@ async def handle_command(command: MilitaryCommand):
             "target_uid": target_uid,
             "affiliation": affiliation,
         }
+
+    # -- No-go zone validation for commands with a target location --
+    if command.location and command.command_type in (
+        CommandType.MOVE, CommandType.OVERWATCH, CommandType.PATROL,
+    ):
+        rejection = check_no_go_zones(
+            command.location.lat, command.location.lon, command.location.alt_m,
+        )
+        if rejection:
+            logger.warning("Command BLOCKED by no-go zone: %s", rejection)
+            return {
+                "status": "blocked",
+                "command_id": command.command_id,
+                "reason": f"Command rejected. {rejection}",
+            }
 
     # -- Standard flow for non-ENGAGE commands --
     logger.info(

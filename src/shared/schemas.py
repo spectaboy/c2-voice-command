@@ -36,6 +36,8 @@ class CommandType(str, Enum):
     STATUS = "status"
     TAKEOFF = "takeoff"
     LAND = "land"
+    MOVE_RELATIVE = "move_relative"
+    SET_ALTITUDE = "set_altitude"
 
 
 class Location(BaseModel):

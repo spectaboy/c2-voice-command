@@ -1,6 +1,7 @@
 """Core NLU: call Claude with tool-calling to parse transcripts into MilitaryCommands."""
 
 import json
+import math
 import os
 import logging
 import re
@@ -8,6 +9,7 @@ from pathlib import Path
 from typing import Union
 
 import anthropic
+import httpx
 
 from src.shared.schemas import (
     CommandType,
@@ -16,7 +18,7 @@ from src.shared.schemas import (
     MilitaryCommand,
     RiskLevel,
 )
-from src.shared.constants import VEHICLES, CALLSIGN_ALIASES
+from src.shared.constants import VEHICLES, CALLSIGN_ALIASES, MAVLINK_BRIDGE_PORT
 from src.shared.battlespace import build_waypoint_prompt_section, build_entity_prompt_section, get_active_vehicles
 from .tools import TOOLS, TOOL_TO_COMMAND_TYPE
 from .context import NLUContext
@@ -145,6 +147,7 @@ When the operator refers to a contact by name or description (e.g. "the hostile 
 - Resolve callsigns: "Alpha"→UAV-1, "Delta"→UGV-1, "the drone"→UAV-1, etc.
 - Resolve locations: street names, landmarks → estimate lat/lon for Halifax, NS area.
 - "all units" / "everyone" → call the tool once per vehicle in the fleet.
+- If there is only ONE vehicle in the fleet, ANY command without an explicit callsign should target that vehicle.
 - UAV default altitude: 100m. Takeoff default: 20m. Ground/sea: altitude 0.
 - Compound commands → multiple tool calls (e.g. "take off and fly to X" = takeoff_vehicle + move_vehicle).
 - "engage" / "attack" / "intercept" → engage_target. Always. Even against friendlies — the coordinator handles safety.
@@ -234,15 +237,93 @@ def _resolve_callsign(raw: str) -> tuple[str, Domain]:
     return raw.strip(), Domain.AIR
 
 
+# ── Direction offsets (lat/lon deltas per meter) ─────────────────────────
+
+_M_PER_DEG_LAT = 111132.92
+
+DIRECTION_VECTORS = {
+    "north":     (0, 1),
+    "south":     (0, -1),
+    "east":      (1, 0),
+    "west":      (-1, 0),
+    "northeast": (0.7071, 0.7071),
+    "northwest": (-0.7071, 0.7071),
+    "southeast": (0.7071, -0.7071),
+    "southwest": (-0.7071, -0.7071),
+}
+
+
+def _get_vehicle_position(callsign: str) -> dict | None:
+    """Fetch current position of a vehicle from the vehicle bridge."""
+    try:
+        resp = httpx.get(
+            f"http://localhost:{MAVLINK_BRIDGE_PORT}/telemetry/{callsign}",
+            timeout=2.0,
+        )
+        if resp.status_code == 200:
+            return resp.json()
+    except Exception as e:
+        logger.warning("Could not fetch telemetry for %s: %s", callsign, e)
+    return None
+
+
+def _compute_relative_position(
+    current_lat: float, current_lon: float, current_alt: float,
+    direction: str | None, distance_m: float, target_alt: float | None,
+) -> Location:
+    """Compute a new lat/lon from a relative direction + distance."""
+    m_per_deg_lon = _M_PER_DEG_LAT * math.cos(math.radians(current_lat))
+
+    new_lat = current_lat
+    new_lon = current_lon
+
+    if direction and distance_m > 0:
+        dx, dy = DIRECTION_VECTORS.get(direction, (0, 0))
+        new_lat += (dy * distance_m) / _M_PER_DEG_LAT
+        new_lon += (dx * distance_m) / m_per_deg_lon
+
+    alt = target_alt if target_alt is not None else current_alt
+    return Location(lat=new_lat, lon=new_lon, alt_m=alt)
+
+
 def _tool_result_to_command(
     tool_name: str, tool_input: dict, transcript: str
 ) -> MilitaryCommand:
     """Convert a Claude tool call into a MilitaryCommand."""
-    command_type = CommandType(TOOL_TO_COMMAND_TYPE[tool_name])
+    command_type_str = TOOL_TO_COMMAND_TYPE[tool_name]
 
     # Resolve callsign
     raw_callsign = tool_input.get("callsign", "")
     callsign, domain = _resolve_callsign(raw_callsign)
+
+    # Handle move_relative and set_altitude — convert to MOVE with absolute coords
+    if tool_name in ("move_relative", "set_altitude"):
+        pos = _get_vehicle_position(callsign)
+        cur_lat = pos["lat"] if pos else 0.0
+        cur_lon = pos["lon"] if pos else 0.0
+        cur_alt = pos["alt_m"] if pos else 10.0
+
+        if tool_name == "move_relative":
+            direction = tool_input.get("direction")
+            distance_m = tool_input.get("distance_m", 0)
+            target_alt = tool_input.get("alt_m")
+            location = _compute_relative_position(
+                cur_lat, cur_lon, cur_alt, direction, distance_m, target_alt,
+            )
+        else:  # set_altitude
+            location = Location(lat=cur_lat, lon=cur_lon, alt_m=tool_input["alt_m"])
+
+        # Convert to a standard MOVE command for downstream execution
+        return MilitaryCommand(
+            command_type=CommandType.MOVE,
+            vehicle_callsign=callsign,
+            domain=domain,
+            location=location,
+            parameters={"original_tool": tool_name},
+            raw_transcript=transcript,
+        )
+
+    command_type = CommandType(command_type_str)
 
     # Build location if present
     location = None

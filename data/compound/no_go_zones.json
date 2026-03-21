@@ -1,0 +1,18 @@
+[
+    {
+        "name": "fuel depot",
+        "lat": 32.9897121,
+        "lon": -106.9752897,
+        "radius_m": 10,
+        "alt_ceil_m": null,
+        "description": "Fuel depot - no fly zone at all altitudes"
+    },
+    {
+        "name": "comms tower",
+        "lat": 32.9902699,
+        "lon": -106.9745709,
+        "radius_m": 8,
+        "alt_ceil_m": 25.0,
+        "description": "Communications tower - no fly below 25m AGL"
+    }
+]

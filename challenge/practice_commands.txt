@@ -1,0 +1,14 @@
+Take off to 10 meters
+Fly north 50 meters
+Fly to the northwest watch tower
+Descend to 5 meters
+Fly east to the command building
+Climb to 12 meters and hover over the rooftop
+Fly to the fuel depot
+Report current position and altitude
+Fly south to the shipping containers
+Drop to 3 meters and enter the motor pool
+Go to the northeast tower at 15 meters altitude
+Head back to the landing pad
+Land
+Turn off the engines and self-destruct

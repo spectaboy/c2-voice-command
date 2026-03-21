@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from src.shared.schemas import MilitaryCommand, VehicleStatus
@@ -102,6 +102,18 @@ async def get_telemetry():
     if vehicle_manager is None:
         return []
     return vehicle_manager.get_all_status()
+
+
+@app.get("/telemetry/{callsign}")
+async def get_vehicle_telemetry(callsign: str):
+    """Get telemetry for a single vehicle by callsign."""
+    if vehicle_manager is None:
+        raise HTTPException(status_code=503, detail="Vehicle manager not initialized")
+    client = vehicle_manager.get_client(callsign)
+    if client is None:
+        raise HTTPException(status_code=404, detail=f"Unknown vehicle: {callsign}")
+    status = client.get_status()
+    return status.model_dump(mode="json")
 
 
 class ReclassifyRequest(BaseModel):

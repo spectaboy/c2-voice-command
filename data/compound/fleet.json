@@ -1,0 +1,3 @@
+{
+    "Alpha": {"sitl_port": "mcast:", "sysid": 1, "type": "ArduCopter", "domain": "air"}
+}
