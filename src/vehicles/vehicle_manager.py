@@ -94,6 +94,11 @@ class VehicleManager:
     def connected_count(self) -> int:
         return sum(1 for c in self._clients.values() if c.connected)
 
+    @property
+    def callsigns(self) -> list[str]:
+        """Callsigns in the currently loaded fleet (for /health debugging)."""
+        return list(self._clients.keys())
+
     async def execute_command(self, cmd: MilitaryCommand) -> dict:
         """Route a MilitaryCommand to the appropriate vehicle(s)."""
         callsign = cmd.vehicle_callsign.upper()

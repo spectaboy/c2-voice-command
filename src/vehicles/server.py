@@ -79,13 +79,20 @@ async def health():
 
 @app.post("/reconnect")
 async def reconnect():
-    """Reconnect to SITL instances that aren't connected."""
+    """Drop MAVLink clients, reload fleet from disk/env, and connect again.
+
+    Use this after changing BATTLESPACE_FLEET or starting arducopter *after* the bridge.
+    """
+    global vehicle_manager
     if vehicle_manager is None:
         return {"success": False, "error": "Vehicle manager not initialized"}
-    results = await vehicle_manager.connect_all(retries=3, delay=2.0)
+    await vehicle_manager.disconnect_all()
+    vehicle_manager = VehicleManager()
+    results = await vehicle_manager.connect_all(retries=5, delay=3.0)
     return {
         "success": True,
         "connected": vehicle_manager.connected_count,
+        "fleet": list(vehicle_manager.callsigns),
         "results": results,
     }
 

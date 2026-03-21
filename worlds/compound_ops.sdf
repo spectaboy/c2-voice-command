@@ -16,13 +16,20 @@
     </plugin>
     <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
     <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
-    <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce"/>
+    
 
-    <!-- ArduPilot Iris quadcopter — spawns at the landing pad -->
+    <!-- Alpha — ArduPilot SITL instance 0, fdm_port_in 9002 -->
     <include>
       <uri>model://iris_with_ardupilot</uri>
-      <name>iris</name>
-      <pose>-40 0 0.2 0 0 0</pose>
+      <name>iris_alpha</name>
+      <pose>-40 -3 0.2 0 0 0</pose>
+    </include>
+
+    <!-- Bravo — ArduPilot SITL instance 1, fdm_port_in 9012 -->
+    <include>
+      <uri>model://iris_with_ardupilot_2</uri>
+      <name>iris_bravo</name>
+      <pose>-40 3 0.2 0 0 0</pose>
     </include>
 
     <!-- Lighting -->

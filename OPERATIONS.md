@@ -45,11 +45,13 @@ Opens on http://localhost:3000.
 
 ## 2. Quick Reference
 
-### Fleet
-| Callsign | SITL Port | SysID | Type | Domain |
-|---|---|---|---|---|
-| Alpha | 5762 | 1 | ArduCopter | air |
-| Bravo | 5772 | 2 | ArduCopter | air |
+### Fleet (`data/fleet.json`)
+| Callsign | SITL TCP port | SysID | Notes |
+|---|---|---|---|
+| Alpha | **5760** | 1 | SERIAL0 for instance `-I0` (default when running `arducopter` directly) |
+| Bravo | **5770** | 2 | SERIAL0 for instance `-I1` |
+
+**Why not 5762/5772?** Those are SERIAL1. With **direct** `arducopter` (no `sim_vehicle.py`), SERIAL1 is **not** opened unless you add **`-C tcp:0`**. Alternative: keep fleet at 5762/5772 and add `-C tcp:0` to both SITL command lines.
 
 ### Callsign Aliases
 | Say this... | Resolves to |
@@ -156,10 +158,77 @@ curl http://localhost:8005/health   # WebSocket Hub
 
 ---
 
-## 6. Troubleshooting
+## 6. macOS + real `arducopter` (no WSL)
+
+### 6a. World: two visible drones (Alpha / Bravo)
+
+This repo’s `worlds/compound_ops.sdf` includes **two** models:
+
+| Include name   | Model URI                    | FDM UDP (Gazebo ↔ JSON SITL) | SITL instance | MAVLink TCP (fleet; SERIAL0) |
+|----------------|------------------------------|------------------------------|---------------|------------------------------|
+| `iris_alpha`   | `model://iris_with_ardupilot`   | **9002**                     | `-I0`         | **5760** (Alpha)             |
+| `iris_bravo`   | `model://iris_with_ardupilot_2` | **9012**                     | `-I1`         | **5770** (Bravo)             |
+
+`iris_with_ardupilot_2` is a copy of `iris_with_ardupilot` with `<fdm_port_in>9012</fdm_port_in>` so it matches ArduPilot’s JSON port rule **9002 + instance×10** for instance 1.
+
+**Always start Gazebo from the project root** so `model://…` resolves (`./launch_gz.sh` sets `GZ_SIM_RESOURCE_PATH`). On some Mac setups you may still need a second terminal: `gz sim -g` for the GUI.
+
+### 6b. Four terminals (dual drone + C2)
+
+1. **Gazebo**
+   ```bash
+   cd /path/to/c2-voice-command
+   ./launch_gz.sh
+   ```
+2. **Alpha SITL** (instance 0 → FDM 9002)
+   ```bash
+   cd /path/to/c2-voice-command/ardupilot
+   source ../.venv/bin/activate   # or .venv311 for tooling; arducopter is the binary
+   build/sitl/bin/arducopter \
+     --model JSON --speedup 1 --slave 0 \
+     --defaults Tools/autotest/default_params/copter.parm,Tools/autotest/default_params/gazebo-iris.parm \
+     --sim-address 127.0.0.1 \
+     -I0 --sysid 1 \
+     --home 32.990,-106.975,1400,0
+   ```
+3. **Bravo SITL** (instance 1 → FDM 9012)
+   ```bash
+   cd /path/to/c2-voice-command/ardupilot
+   source ../.venv/bin/activate
+   build/sitl/bin/arducopter \
+     --model JSON --speedup 1 --slave 0 \
+     --defaults Tools/autotest/default_params/copter.parm,Tools/autotest/default_params/gazebo-iris.parm \
+     --sim-address 127.0.0.1 \
+     -I1 --sysid 2 \
+     --home 32.990,-106.975,1400,0
+   ```
+4. **C2 backend** (after both SITLs are up; `data/fleet.json` uses SERIAL0 **5760 / 5770**)
+   ```bash
+   cd /path/to/c2-voice-command
+   source .venv311/bin/activate
+   SITL_HOST=127.0.0.1 BATTLESPACE_FLEET=data/fleet.json python scripts/start_all.py
+   ```
+
+**Order:** Gazebo → both `arducopter` processes → backend. If the bridge started before SITL: `curl -s -X POST http://localhost:8003/reconnect`.
+
+**Gotchas:** Do not use `launch_sitl.sh` / `sim_vehicle.py` for this on macOS (MAVProxy issues). With **direct** `arducopter`, the bridge uses **SERIAL0** ports **5760 / 5770** (see `data/fleet.json`). Only one MAVLink client per port — don’t attach MAVProxy/QGC to the same port as the bridge. Keep `--home` the same on both instances; spacing is from `<pose>` in the SDF.
+
+### 6c. Single drone (Alpha only)
+
+One include / one `arducopter` **`-I0 --sysid 1`** is enough; use `data/fleet_one.json` (Alpha only) if you want to avoid Bravo connection errors.
+
+---
+
+## 7. Troubleshooting
 
 | Problem | Cause | Fix |
 |---|---|---|
+| `start_all.py` kills SITL / bridge never connects | Script used to `kill -9` PIDs on 5760,5770,… (same ports as `arducopter`) | Fixed when `SITL_HOST` is set (skips killing SITL ports). Start backend **after** `arducopter`, or restart SITL after backend. |
+| `/reconnect` still shows old fleet | Bridge loaded fleet only at process start | Use **`POST /reconnect`** after code update, or restart the Vehicle Bridge; set `BATTLESPACE_FLEET` **before** starting uvicorn / `start_all.py`. |
+| `connected_vehicles: 0` | Direct `arducopter` has no SERIAL1 unless **`-C tcp:0`**; fleet uses **5760/5770** | Confirm `lsof -nP -iTCP:5760 -iTCP:5770 \| grep LISTEN`; `POST /reconnect`. Or use **5762/5772** in fleet **and** add `-C tcp:0` to both SITL cmds. |
+| Bravo never connects | Only one `arducopter` or both `-I0` | Need **two** processes: **`-I0`** (5760) and **`-I1`** (5770). |
+| Gazebo errors on `iris_with_ardupilot_2` | `GZ_SIM_RESOURCE_PATH` missing `ardupilot_gazebo/models` | Run **`./launch_gz.sh`** from repo root, not `gz sim` on a bare path only. |
+| Two drones stack on same spot | Both SITL instances same pose | World uses offset poses (`iris_alpha` / `iris_bravo`); ensure both SITLs use the same `--home` as in §6b. |
 | `SITL_HOST` set but bridge can't connect | WSL IP changed after reboot | Run `hostname -I` in WSL, update `$env:SITL_HOST` |
 | Port already in use | Previous Python processes didn't clean up | `taskkill /F /IM python.exe` then re-run `start_all.py` |
 | NLU returns 422 | Whisper misheard the command | Check `src/nlu/data/command_log.json` for the raw transcript, rephrase |

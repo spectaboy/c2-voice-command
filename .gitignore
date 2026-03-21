@@ -1,1 +1,16 @@
 .env
+.venv/
+.venv311/
+venv/
+node_modules/
+__pycache__/
+*.py[cod]
+.DS_Store
+logs/
+terrain/
+ardupilot/
+ardupilot_gazebo/
+
+# SITL / local IDE
+eeprom.bin
+.claude/settings.local.json

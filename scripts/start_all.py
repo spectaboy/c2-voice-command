@@ -86,14 +86,18 @@ def main():
     print(f"Working dir: {os.getcwd()}")
     print()
 
-    # Clear old processes on our ports (services + SITL)
+    # Clear old processes on our HTTP ports. Do NOT kill ArduPilot SITL TCP ports
+    # (5760, 5762, 5770, 5772, …) when using a real SITL — that would SIGKILL arducopter.
     print("Clearing ports...")
-    SITL_PORTS = [5760, 5770, 5780, 5790, 5800, 5810]
     for svc in SERVICES:
         if svc["port"]:
             kill_port(svc["port"])
-    for port in SITL_PORTS:
-        kill_port(port)
+    if not USE_REAL_SITL:
+        SITL_PORTS = [5760, 5770, 5780, 5790, 5800, 5810]
+        for port in SITL_PORTS:
+            kill_port(port)
+    else:
+        print("  (skipping SITL MAVLink ports — SITL_HOST is set, real arducopter may be running)")
     time.sleep(2)
 
     print("Starting services...\n")

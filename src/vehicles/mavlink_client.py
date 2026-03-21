@@ -84,17 +84,24 @@ class MAVLinkClient:
             addr = self.port
         else:
             addr = f"tcp:{self.host}:{self.port}"
-        logger.info(f"[{self.callsign}] Connecting to {addr}")
+        logger.info(f"[{self.callsign}] Connecting to {addr} ...")
 
-        self.conn = await asyncio.to_thread(
-            mavutil.mavlink_connection, addr, source_system=255
-        )
+        try:
+            self.conn = await asyncio.to_thread(
+                mavutil.mavlink_connection, addr, source_system=255
+            )
+        except Exception as e:
+            logger.error(f"[{self.callsign}] TCP connect to {addr} failed: {e}")
+            raise ConnectionError(
+                f"[{self.callsign}] Cannot open {addr}: {e}"
+            )
 
         # Wait for heartbeat with timeout
+        logger.info(f"[{self.callsign}] TCP connected, waiting for heartbeat ...")
         hb = await asyncio.to_thread(self.conn.wait_heartbeat, timeout=10)
         if hb is None:
             raise ConnectionError(
-                f"[{self.callsign}] No heartbeat from {addr}"
+                f"[{self.callsign}] No heartbeat from {addr} within 10s"
             )
 
         self._last_heartbeat = time.time()

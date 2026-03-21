@@ -27,8 +27,20 @@ echo " Gazebo Harmonic — UxS Hackathon"
 echo ""
 echo "  World: $(basename "${WORLD}")"
 echo ""
-echo "  Next: run ./launch_sitl.sh in another terminal"
-echo "══════════════════════════════════════════════════════"
-echo ""
 
-exec gz sim -v4 -r "${WORLD}"
+# macOS: gz sim cannot run server + GUI in one process (gz-sim#44).
+# Use -s here; open a second terminal and run: gz sim -g
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  echo "  macOS: this terminal = simulation SERVER only (-s)."
+  echo "  Open another terminal and run:  gz sim -g"
+  echo ""
+  echo "  Next: SITL (arducopter) then C2 backend — see OPERATIONS.md"
+  echo "══════════════════════════════════════════════════════"
+  echo ""
+  exec gz sim -s -v4 -r "${WORLD}"
+else
+  echo "  Next: run SITL / C2 — see OPERATIONS.md"
+  echo "══════════════════════════════════════════════════════"
+  echo ""
+  exec gz sim -v4 -r "${WORLD}"
+fi
