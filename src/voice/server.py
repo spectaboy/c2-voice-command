@@ -301,8 +301,9 @@ async def _emit_transcript(result: dict) -> None:
                 if not commands:
                     logger.warning("NLU returned no commands for: %s", result["transcript"])
                     await _broadcast_error("Could not parse command. Please try again.")
-                for cmd in commands:
-                    logger.info("Forwarding command to coordinator: %s %s",
+                for i, cmd in enumerate(commands):
+                    logger.info("Forwarding command %d/%d to coordinator: %s %s",
+                                i + 1, len(commands),
                                 cmd.get("command_type"), cmd.get("vehicle_callsign"))
                     try:
                         coord_resp = await client.post(
@@ -333,10 +334,14 @@ async def _emit_transcript(result: dict) -> None:
                             readback = _generate_execution_readback(cmd)
                             if readback:
                                 asyncio.create_task(speak_with_effects(readback))
-                            await _broadcast_command_event("executed", cmd, readback or "Executed.")
+                            await _broadcast_command_event("executed", cmd, readback or "Command sent.")
 
                     except Exception as e:
                         logger.warning("Failed to reach coordinator: %s", e)
+
+                    # Delay between compound commands to allow sequential execution
+                    if i < len(commands) - 1:
+                        await asyncio.sleep(2.0)
             elif resp.status_code == 422:
                 logger.warning("NLU returned 422 for: %s", result["transcript"])
                 await _broadcast_error("Could not understand command. Please rephrase.")

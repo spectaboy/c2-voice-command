@@ -130,6 +130,9 @@ Safety checks happen DOWNSTREAM — not your job. Just parse and call tools.
 ## Callsign Aliases
 {alias_info}
 
+## Live Vehicle Telemetry
+{telemetry_info}
+
 ## Waypoints
 {waypoint_info}
 
@@ -155,6 +158,33 @@ When the operator refers to a contact by name or description (e.g. "the hostile 
 
 {context_block}
 """
+
+
+def _build_telemetry_info() -> str:
+    """Fetch live telemetry from vehicle bridge and format for the system prompt."""
+    import httpx
+    from src.shared.constants import MAVLINK_BRIDGE_PORT
+
+    try:
+        with httpx.Client(timeout=2.0) as client:
+            resp = client.get(f"http://localhost:{MAVLINK_BRIDGE_PORT}/telemetry")
+            if resp.status_code != 200:
+                return "(telemetry unavailable)"
+            vehicles = resp.json()
+    except Exception:
+        return "(telemetry unavailable)"
+
+    if not vehicles:
+        return "(no vehicles connected)"
+
+    lines = []
+    for v in vehicles:
+        lines.append(
+            f"- {v['callsign']}: pos=({v['lat']:.6f}, {v['lon']:.6f}, {v['alt_m']:.1f}m) "
+            f"mode={v['mode']} armed={v['armed']} speed={v['speed_mps']:.1f}m/s "
+            f"battery={v['battery_pct']:.0f}%"
+        )
+    return "\n".join(lines)
 
 
 def _build_fleet_info() -> str:
@@ -228,6 +258,17 @@ def _tool_result_to_command(
     elif tool_input.get("grid_ref"):
         location = Location(lat=0.0, lon=0.0, grid_ref=tool_input["grid_ref"])
 
+    # For patrol_route: extract first waypoint as primary location if no top-level lat/lon
+    if tool_name == "patrol_route" and location is None:
+        waypoints = tool_input.get("waypoints", [])
+        if waypoints:
+            first = waypoints[0]
+            location = Location(
+                lat=first["lat"],
+                lon=first["lon"],
+                alt_m=first.get("alt_m", 100.0 if domain == Domain.AIR else 0.0),
+            )
+
     # Build parameters dict (everything not already captured)
     skip_keys = {"callsign", "lat", "lon", "alt_m", "grid_ref"}
     parameters = {k: v for k, v in tool_input.items() if k not in skip_keys}
@@ -279,6 +320,7 @@ class NLUParser:
         system = SYSTEM_PROMPT.format(
             fleet_info=_build_fleet_info(),
             alias_info=_build_alias_info(),
+            telemetry_info=_build_telemetry_info(),
             waypoint_info=build_waypoint_prompt_section(),
             entity_info=build_entity_prompt_section() + "\n\n" + _build_entity_info(),
             context_block=context_block,

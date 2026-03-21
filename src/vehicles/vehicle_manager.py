@@ -121,6 +121,12 @@ class VehicleManager:
                     return {"success": True, "action": "rtb", "callsign": client.callsign}
 
                 case CommandType.LOITER:
+                    # Navigate to location first, then switch to LOITER mode
+                    if cmd.location:
+                        alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 50.0
+                        await client.move_to(
+                            cmd.location.lat, cmd.location.lon, alt
+                        )
                     await client.set_mode("LOITER")
                     return {"success": True, "action": "loiter", "callsign": client.callsign}
 
@@ -138,8 +144,13 @@ class VehicleManager:
                     return {"success": True, "action": "status", "status": status.model_dump()}
 
                 case CommandType.PATROL:
-                    # Stretch goal — for now, move to first location
-                    if cmd.location:
+                    # Use waypoints from parameters if available, fall back to location
+                    waypoints = cmd.parameters.get("waypoints", [])
+                    if waypoints:
+                        first = waypoints[0]
+                        alt = first.get("alt_m", 100.0 if client.is_copter else 0.0)
+                        await client.move_to(first["lat"], first["lon"], alt)
+                    elif cmd.location:
                         await client.move_to(
                             cmd.location.lat, cmd.location.lon, cmd.location.alt_m
                         )
@@ -153,6 +164,21 @@ class VehicleManager:
                 case CommandType.LAND:
                     await client.land()
                     return {"success": True, "action": "land", "callsign": client.callsign}
+
+                case CommandType.ENGAGE:
+                    target_uid = cmd.parameters.get("target_uid", "")
+                    if cmd.location:
+                        alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 50.0
+                        await client.move_to(
+                            cmd.location.lat, cmd.location.lon, alt
+                        )
+                    await client.set_mode("CIRCLE")
+                    return {
+                        "success": True,
+                        "action": "engage",
+                        "callsign": client.callsign,
+                        "target_uid": target_uid,
+                    }
 
                 case _:
                     return {"success": False, "error": f"Unsupported command type: {cmd.command_type}"}
