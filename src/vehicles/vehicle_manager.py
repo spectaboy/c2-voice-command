@@ -129,7 +129,7 @@ class VehicleManager:
                 case CommandType.LOITER:
                     # Navigate to location first, then switch to LOITER mode
                     if cmd.location:
-                        alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 50.0
+                        alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 12.0
                         await client.move_to(
                             cmd.location.lat, cmd.location.lon, alt
                         )
@@ -139,7 +139,7 @@ class VehicleManager:
                 case CommandType.OVERWATCH:
                     if cmd.location is None:
                         return {"success": False, "error": "OVERWATCH requires a location"}
-                    alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 50.0
+                    alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 15.0
                     await client.move_to(
                         cmd.location.lat, cmd.location.lon, alt
                     )
@@ -174,7 +174,7 @@ class VehicleManager:
                 case CommandType.ENGAGE:
                     target_uid = cmd.parameters.get("target_uid", "")
                     if cmd.location:
-                        alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 50.0
+                        alt = cmd.location.alt_m if cmd.location.alt_m > 0 else 15.0
                         await client.move_to(
                             cmd.location.lat, cmd.location.lon, alt
                         )

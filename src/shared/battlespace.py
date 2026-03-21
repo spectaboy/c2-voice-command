@@ -1,7 +1,7 @@
 """Configurable battlespace loader.
 
 On hackathon day, waypoints/entities/fleet files are provided via env vars.
-Falls back to hardcoded defaults (Halifax landmarks, default VEHICLES dict).
+Falls back to compound waypoints (Fort Huachuca-style compound, origin 32.990, -106.975).
 
 Env vars:
   BATTLESPACE_WAYPOINTS — path to JSON file with waypoint definitions
@@ -18,69 +18,95 @@ from src.shared.constants import VEHICLES
 
 logger = logging.getLogger(__name__)
 
-# Default Halifax waypoints (used when no file is provided)
+# Default compound waypoints — origin 32.990, -106.975, 1400m ASL
+# ENU coordinates (x=East, y=North) converted to GPS
 DEFAULT_WAYPOINTS = {
-    # Major landmarks
-    "Halifax Harbor": {"lat": 44.6425, "lon": -63.5670},
-    "the harbor": {"lat": 44.6425, "lon": -63.5670},
-    "Citadel Hill": {"lat": 44.6478, "lon": -63.5802},
-    "the citadel": {"lat": 44.6478, "lon": -63.5802},
-    "HMC Dockyard": {"lat": 44.6620, "lon": -63.5880},
-    "the dockyard": {"lat": 44.6620, "lon": -63.5880},
-    "Point Pleasant Park": {"lat": 44.6230, "lon": -63.5690},
-    "the park": {"lat": 44.6230, "lon": -63.5690},
-    "Georges Island": {"lat": 44.6380, "lon": -63.5620},
-    "McNabs Island": {"lat": 44.6190, "lon": -63.5340},
-    "Halifax Waterfront": {"lat": 44.6460, "lon": -63.5680},
-    "the waterfront": {"lat": 44.6460, "lon": -63.5680},
-    "Pier 21": {"lat": 44.6390, "lon": -63.5660},
-    "Bedford Basin": {"lat": 44.6800, "lon": -63.6300},
-    "the basin": {"lat": 44.6800, "lon": -63.6300},
-    "Angus L. Macdonald Bridge": {"lat": 44.6630, "lon": -63.5630},
-    "the bridge": {"lat": 44.6630, "lon": -63.5630},
-    "Dartmouth": {"lat": 44.6650, "lon": -63.5590},
-    "CFB Halifax": {"lat": 44.6510, "lon": -63.5820},
-    "Halifax Commons": {"lat": 44.6510, "lon": -63.5840},
-    "the commons": {"lat": 44.6510, "lon": -63.5840},
-    "Nathan Green Square": {"lat": 44.6482, "lon": -63.5710},
-    "Chebucto Landing": {"lat": 44.6492, "lon": -63.5668},
+    "landing pad": {"lat": 32.99, "lon": -106.9754291},
+    "the landing pad": {"lat": 32.99, "lon": -106.9754291},
+    "launch pad": {"lat": 32.99, "lon": -106.9754291},
+    "the launch pad": {"lat": 32.99, "lon": -106.9754291},
+    "the pad": {"lat": 32.99, "lon": -106.9754291},
+    "home": {"lat": 32.99, "lon": -106.9754291},
+    "base": {"lat": 32.99, "lon": -106.9754291},
 
-    # Major streets (midpoints for navigation)
-    "Barrington Street": {"lat": 44.6480, "lon": -63.5728},
-    "Duke Street": {"lat": 44.6490, "lon": -63.5740},
-    "Prince Street": {"lat": 44.6472, "lon": -63.5735},
-    "Argyle Street": {"lat": 44.6468, "lon": -63.5755},
-    "Hollis Street": {"lat": 44.6480, "lon": -63.5710},
-    "Granville Street": {"lat": 44.6478, "lon": -63.5720},
-    "Upper Water Street": {"lat": 44.6490, "lon": -63.5690},
-    "Lower Water Street": {"lat": 44.6465, "lon": -63.5685},
-    "Brunswick Street": {"lat": 44.6500, "lon": -63.5760},
-    "Gottingen Street": {"lat": 44.6520, "lon": -63.5770},
-    "Cogswell Street": {"lat": 44.6515, "lon": -63.5745},
-    "Sackville Street": {"lat": 44.6460, "lon": -63.5740},
-    "Spring Garden Road": {"lat": 44.6430, "lon": -63.5780},
-    "South Park Street": {"lat": 44.6420, "lon": -63.5770},
-    "Rainnie Drive": {"lat": 44.6505, "lon": -63.5785},
+    "gate": {"lat": 32.99, "lon": -106.9756437},
+    "the gate": {"lat": 32.99, "lon": -106.9756437},
+    "west gate": {"lat": 32.99, "lon": -106.9756437},
+    "the west gate": {"lat": 32.99, "lon": -106.9756437},
 
-    # Key intersections
-    "Barrington and Duke": {"lat": 44.6490, "lon": -63.5727},
-    "Barrington and Prince": {"lat": 44.6473, "lon": -63.5726},
-    "Barrington and Sackville": {"lat": 44.6458, "lon": -63.5724},
-    "Barrington and Spring Garden": {"lat": 44.6435, "lon": -63.5722},
-    "Duke and Hollis": {"lat": 44.6492, "lon": -63.5712},
-    "Duke and Granville": {"lat": 44.6491, "lon": -63.5720},
-    "Duke and Argyle": {"lat": 44.6489, "lon": -63.5745},
-    "Duke and Brunswick": {"lat": 44.6490, "lon": -63.5758},
-    "Prince and Hollis": {"lat": 44.6474, "lon": -63.5710},
-    "Prince and Granville": {"lat": 44.6473, "lon": -63.5718},
-    "Argyle and Prince": {"lat": 44.6471, "lon": -63.5745},
-    "Gottingen and Cogswell": {"lat": 44.6525, "lon": -63.5768},
-    "Gottingen and Duke": {"lat": 44.6500, "lon": -63.5772},
+    "northwest tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "northwest watch tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "NW tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "the northwest tower": {"lat": 32.9903329, "lon": -106.9756115},
+    "the northwest watch tower": {"lat": 32.9903329, "lon": -106.9756115},
 
-    # Regions
-    "North End": {"lat": 44.6600, "lon": -63.5800},
-    "South End": {"lat": 44.6300, "lon": -63.5750},
-    "Downtown": {"lat": 44.6480, "lon": -63.5730},
+    "northeast tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "northeast watch tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "NE tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "the northeast tower": {"lat": 32.9903329, "lon": -106.9743885},
+    "the northeast watch tower": {"lat": 32.9903329, "lon": -106.9743885},
+
+    "southeast tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "southeast watch tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "SE tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "the southeast tower": {"lat": 32.9896671, "lon": -106.9743885},
+    "the southeast watch tower": {"lat": 32.9896671, "lon": -106.9743885},
+
+    "southwest tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "southwest watch tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "SW tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "the southwest tower": {"lat": 32.9896671, "lon": -106.9756115},
+    "the southwest watch tower": {"lat": 32.9896671, "lon": -106.9756115},
+
+    "command building": {"lat": 32.990126, "lon": -106.9747318},
+    "the command building": {"lat": 32.990126, "lon": -106.9747318},
+    "command": {"lat": 32.990126, "lon": -106.9747318},
+    "rooftop": {"lat": 32.990126, "lon": -106.9747318},
+    "the rooftop": {"lat": 32.990126, "lon": -106.9747318},
+    "rooftop structure": {"lat": 32.990126, "lon": -106.9747318},
+    "cmd building": {"lat": 32.990126, "lon": -106.9747318},
+
+    "containers": {"lat": 32.9898515, "lon": -106.9749839},
+    "the containers": {"lat": 32.9898515, "lon": -106.9749839},
+    "shipping containers": {"lat": 32.9898515, "lon": -106.9749839},
+    "the shipping containers": {"lat": 32.9898515, "lon": -106.9749839},
+
+    "motor pool": {"lat": 32.98982, "lon": -106.9745923},
+    "the motor pool": {"lat": 32.98982, "lon": -106.9745923},
+    "motorpool": {"lat": 32.98982, "lon": -106.9745923},
+
+    "fuel depot": {"lat": 32.9897121, "lon": -106.9752897},
+    "the fuel depot": {"lat": 32.9897121, "lon": -106.9752897},
+
+    "comms tower": {"lat": 32.9902699, "lon": -106.9745709},
+    "the comms tower": {"lat": 32.9902699, "lon": -106.9745709},
+    "communications tower": {"lat": 32.9902699, "lon": -106.9745709},
+
+    "barracks north": {"lat": 32.990225, "lon": -106.9752146},
+    "north barracks": {"lat": 32.990225, "lon": -106.9752146},
+    "barracks 1": {"lat": 32.990225, "lon": -106.9752146},
+    "barracks south": {"lat": 32.989775, "lon": -106.9752146},
+    "south barracks": {"lat": 32.989775, "lon": -106.9752146},
+    "barracks 2": {"lat": 32.989775, "lon": -106.9752146},
+    "barracks": {"lat": 32.990225, "lon": -106.9752146},
+
+    # NATO phonetic aliases (Alpha-Hotel) → primary compound waypoints
+    "Alpha": {"lat": 32.99, "lon": -106.9754291},
+    "waypoint alpha": {"lat": 32.99, "lon": -106.9754291},
+    "Bravo": {"lat": 32.99, "lon": -106.9756437},
+    "waypoint bravo": {"lat": 32.99, "lon": -106.9756437},
+    "Charlie": {"lat": 32.9903329, "lon": -106.9756115},
+    "waypoint charlie": {"lat": 32.9903329, "lon": -106.9756115},
+    "Delta": {"lat": 32.9903329, "lon": -106.9743885},
+    "waypoint delta": {"lat": 32.9903329, "lon": -106.9743885},
+    "Echo": {"lat": 32.9896671, "lon": -106.9743885},
+    "waypoint echo": {"lat": 32.9896671, "lon": -106.9743885},
+    "Foxtrot": {"lat": 32.9896671, "lon": -106.9756115},
+    "waypoint foxtrot": {"lat": 32.9896671, "lon": -106.9756115},
+    "Golf": {"lat": 32.990126, "lon": -106.9747318},
+    "waypoint golf": {"lat": 32.990126, "lon": -106.9747318},
+    "Hotel": {"lat": 32.98982, "lon": -106.9745923},
+    "waypoint hotel": {"lat": 32.98982, "lon": -106.9745923},
 }
 
 

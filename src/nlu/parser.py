@@ -44,7 +44,7 @@ def _load_entity_aliases() -> None:
     global _entity_alias_map
     entity_path = os.getenv(
         "ENTITY_LIST_PATH",
-        str(Path(__file__).resolve().parent.parent.parent / "data" / "entity_list.json"),
+        str(Path(__file__).resolve().parent.parent.parent / "data" / "entities.json"),
     )
     if not os.path.isfile(entity_path):
         logger.info("No entity list at %s — skipping alias map", entity_path)
@@ -144,18 +144,22 @@ When the operator refers to a contact by name or description (e.g. "the hostile 
 
 ## Parsing Rules
 - EVERY transcript = one or more tool calls. No exceptions.
-- Resolve callsigns: "Alpha"→UAV-1, "Delta"→UGV-1, "the drone"→UAV-1, etc.
-- Resolve locations: street names, landmarks → estimate lat/lon for Halifax, NS area.
+- Resolve callsigns using the Fleet and Callsign Aliases above. Default: "the drone" / "drone 1" → Alpha.
+- Resolve locations using the Waypoints list above. The compound is at origin 32.990N, 106.975W (New Mexico). Always use the exact lat/lon from the Waypoints list for named locations.
 - "all units" / "everyone" → call the tool once per vehicle in the fleet.
 - If there is only ONE vehicle in the fleet, ANY command without an explicit callsign should target that vehicle.
-- UAV default altitude: 100m. Takeoff default: 20m. Ground/sea: altitude 0.
+- UAV default altitude: 10m for takeoff. Navigation default: 12m. Ground/sea: altitude 0.
 - Compound commands → multiple tool calls (e.g. "take off and fly to X" = takeoff_vehicle + move_vehicle).
 - "engage" / "attack" / "intercept" → engage_target. Always. Even against friendlies — the coordinator handles safety.
-- "RTB" / "abort" / "return" / "come back" → return_to_base.
-- "take off" / "launch" → takeoff_vehicle.
+- "RTB" / "abort" / "return" / "come back" / "head back to the landing pad" → return_to_base.
+- "take off" / "launch" / "lift off" → takeoff_vehicle.
 - "land" / "touch down" → land_vehicle.
+- "fly north/south/east/west X meters" → move_relative with direction and distance_m.
+- "descend to X meters" / "climb to X meters" / "drop to X meters" → set_altitude with alt_m.
+- "fly into/enter/go inside" a building or enclosure → move_vehicle to that location at low altitude (2-5m).
 - Unclear input with a callsign → request_status for that callsign.
 - Unclear input without a callsign → request_status for "all".
+- Impossible/nonsensical commands (e.g. "self-destruct", "shoot yourself") → request_status for "all".
 - If the operator corrects themselves mid-sentence ("sorry, I meant X"), use the corrected version.
 - "confirm" / "yes" / "affirmative" without a clear command → request_status for "all" (confirmation is handled by voice server, not NLU).
 
@@ -333,7 +337,7 @@ def _tool_result_to_command(
         location = Location(
             lat=lat,
             lon=lon,
-            alt_m=tool_input.get("alt_m", 100.0 if domain == Domain.AIR else 0.0),
+            alt_m=tool_input.get("alt_m", 12.0 if domain == Domain.AIR else 0.0),
             grid_ref=tool_input.get("grid_ref"),
         )
     elif tool_input.get("grid_ref"):

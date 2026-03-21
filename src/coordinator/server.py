@@ -178,7 +178,7 @@ async def handle_command(command: MilitaryCommand):
 
     # -- No-go zone validation for commands with a target location --
     if command.location and command.command_type in (
-        CommandType.MOVE, CommandType.OVERWATCH, CommandType.PATROL,
+        CommandType.MOVE, CommandType.OVERWATCH, CommandType.PATROL, CommandType.LOITER,
     ):
         rejection = check_no_go_zones(
             command.location.lat, command.location.lon, command.location.alt_m,

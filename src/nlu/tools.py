@@ -29,7 +29,7 @@ TOOLS = [
                 },
                 "alt_m": {
                     "type": "number",
-                    "description": "Target altitude in meters (for air vehicles). Default 100m for UAVs, 0 for ground/sea.",
+                    "description": "Target altitude in meters AGL (for air vehicles). Default 12m for UAVs in this compound (buildings are 4-20m tall, scoring waypoints are 3-15m). 0 for ground/sea.",
                 },
                 "grid_ref": {
                     "type": "string",
@@ -82,7 +82,7 @@ TOOLS = [
                 },
                 "alt_m": {
                     "type": "number",
-                    "description": "Overwatch altitude in meters (UAVs typically 80-150m)",
+                    "description": "Overwatch altitude in meters AGL. For this compound, use 12-20m to clear buildings.",
                 },
                 "grid_ref": {
                     "type": "string",

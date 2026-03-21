@@ -85,7 +85,9 @@
       "Bash(brew list:*)",
       "Bash(brew install:*)",
       "Bash(gz sim:*)",
-      "Bash(brew pin:*)"
+      "Bash(brew pin:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
